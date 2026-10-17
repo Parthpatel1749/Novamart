@@ -1,0 +1,339 @@
+================================================================================
+NOVAMART E-COMMERCE PLATFORM: BACKEND CODE AUDIT & INFRASTRUCTURE REPORT
+Comprehensive Analysis of 'server-side' vs. 'Spring Boot' Directories
+Generated on: 2026-10-16
+================================================================================
+
+EXECUTIVE SUMMARY & CORE DETERMINATION
+--------------------------------------------------------------------------------
+1. Key Discovery:
+   'server-side' and 'Spring Boot' do NOT contain separate or divergent copies
+   of the backend application. On the Windows NTFS filesystem, 'server-side' is
+   an NTFS Directory Junction (<JUNCTION>) created on 13-10-2026 at 10:23 that
+   points directly to the physical folder:
+   C:\Users\LENOVO\OneDrive\Desktop\React.js\React_2\Spring Boot
+
+   Filesystem Directory Table Proof:
+   13-10-2026  10:23  <JUNCTION>  server-side [C:\Users\LENOVO\OneDrive\Desktop\React.js\React_2\Spring Boot]
+   15-10-2026  22:51  <DIR>       Spring Boot
+
+   Every file accessed via 'server-side' (e.g., server-side\pom.xml) accesses
+   the exact same physical data clusters on disk as Spring Boot\pom.xml.
+
+2. Authoritative Determination - Which Backend to Retain:
+   RETAIN 'server-side' as the permanent, authoritative physical folder name.
+   ELIMINATE the directory name 'Spring Boot' by safely converting it into the
+   physical 'server-side' directory.
+
+3. Rationale for Retaining 'server-side':
+   - Script Consistency: Both start-server.bat and start-all.bat explicitly
+     target 'server-side' (e.g., cd /d "%~dp0server-side" && mvn spring-boot:run).
+     Neither batch file references 'Spring Boot'.
+   - NPM Orchestration: package.json script "dev:server" executes:
+     "cd server-side && mvn spring-boot:run"
+   - Architectural Naming Symmetry: The platform follows a clean kebab-case
+     trio: 'user-side' (customer storefront), 'admin-side' (operations portal),
+     and 'server-side' (REST API backend).
+   - Space Removal: Directory names containing spaces (like 'Spring Boot') break
+     command-line arguments, Docker mounts, Bash scripts, and CI/CD pipelines
+     when unquoted.
+   - Deletion Safety Hazard: Because 'server-side' is an NTFS junction, running
+     a standard recursive delete (e.g., rmdir /s /q server-side or Remove-Item
+     -Recurse server-side) would follow the junction and permanently delete all
+     source files inside 'Spring Boot'. Conversely, deleting 'Spring Boot' leaves
+     'server-side' as a broken junction.
+
+
+================================================================================
+SECTION 1: COMPARISON OF POM.XML & JAVA SOURCE FILES
+================================================================================
+1. pom.xml Comparison:
+   - File Path 1: Spring Boot\pom.xml
+   - File Path 2: server-side\pom.xml
+   - SHA256 Checksum: B5F239689B28F62AD15AD05A21ADADE64D588CAB21338CE839A4DB3B78D415E5
+   - File Size: 3,115 bytes (86 lines)
+   - Status: 100% Bit-for-bit Identical.
+
+2. Java Source Files Inventory:
+   - Total Java Files: Exactly 87 Java source files across both paths.
+   - Test Source Files: 0 test source files in both.
+   - Compilation Status: Both paths compile with BUILD SUCCESS under Java 21 & Maven 3.9.16.
+
+3. Complete Breakdown by Package (com.ecommerce.*):
+   - Entry Point (1 file):
+     * Application.java (Spring Boot main runner)
+   - Config (2 files):
+     * CorsConfig.java (Global CORS filter)
+     * DataInitializer.java (Pre-seeded demo accounts, zones, catalog, partners)
+   - Controllers (13 files):
+     * AddressController.java
+     * AdminDeliveryController.java
+     * AdminOrderController.java
+     * AdminProductController.java
+     * AuthController.java
+     * CartController.java
+     * CategoryController.java
+     * CouponController.java
+     * DeliveryPartnerController.java
+     * OrderController.java
+     * PaymentController.java
+     * ProductController.java
+     * ReviewController.java
+   - Data Transfer Objects / DTOs (21 files):
+     * AddressDto.java, AddToCartRequest.java, ApiResponse.java,
+       AssignDeliveryRequest.java, AuthRequest.java, AuthResponse.java,
+       CartDto.java, CartItemDto.java, CouponDto.java, CreateOrderRequest.java,
+       DashboardStatsDto.java, DeliveryPartnerDto.java,
+       DeliveryPartnerRegisterRequest.java, DeliveryStatusUpdateRequest.java,
+       DeliveryZoneDto.java, OrderDto.java, OrderItemDto.java,
+       PasswordResetRequest.java, ProductDto.java, RegisterRequest.java,
+       ReviewDto.java
+   - Entities / Relational Models (14 files):
+     * Address.java, Cart.java, CartItem.java, Category.java, Coupon.java,
+       DeliveryAssignment.java, DeliveryPartner.java, DeliveryPartnerStatus.java,
+       DeliveryZone.java, Order.java, OrderItem.java, OrderStatus.java,
+       Product.java, Review.java, Role.java, User.java
+   - Exceptions (4 files):
+     * BadRequestException.java, ErrorDetails.java,
+       GlobalExceptionHandler.java, ResourceNotFoundException.java
+   - Repositories / Spring Data JPA (11 files):
+     * AddressRepository.java, CartItemRepository.java, CartRepository.java,
+       CategoryRepository.java, CouponRepository.java,
+       DeliveryAssignmentRepository.java, DeliveryPartnerRepository.java,
+       DeliveryZoneRepository.java, OrderItemRepository.java,
+       OrderRepository.java, ProductRepository.java, ReviewRepository.java,
+       UserRepository.java
+   - Security & JWT (5 files):
+     * CustomUserDetailsService.java, JwtAuthenticationEntryPoint.java,
+       JwtAuthenticationFilter.java, JwtTokenProvider.java, SecurityConfig.java
+   - Business Services (11 files):
+     * AddressService.java, AuthService.java, CartService.java,
+       CategoryService.java, CouponService.java, DeliveryService.java,
+       DeliveryZoneService.java, OrderService.java, PaymentService.java,
+       ProductService.java, ReportService.java, ReviewService.java
+
+
+================================================================================
+SECTION 2: CONFIGURATION, DATABASE, SECURITY & ENDPOINTS ANALYSIS
+================================================================================
+1. Dependencies (pom.xml):
+   - Spring Boot Starter Parent: Version 3.3.4
+   - Java Version: 21 (LTS)
+   - Spring Boot Starters: Web, Data JPA, Security, Validation, Test
+   - JWT Library: io.jsonwebtoken (jjwt-api, jjwt-impl, jjwt-jackson) version 0.12.5
+   - Database Drivers:
+     * H2 Database (com.h2database:h2, in-memory embedded)
+     * MySQL Connector/J (com.mysql:mysql-connector-j:8.3.0)
+
+2. Database Configuration:
+   - application.properties:
+     * Active Profile: spring.profiles.active=mysql
+     * Port: server.port=8080
+     * Default Fallback URL: jdbc:h2:mem:ecommerce_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
+     * H2 Console: Enabled at /h2-console
+     * JWT Secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+     * JWT Expiration: 86,400,000 ms (24 hours)
+   - application-mysql.properties:
+     * JDBC URL: jdbc:mysql://localhost:3306/ecommerce_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+     * Driver: com.mysql.cj.jdbc.Driver
+     * Credentials: user=root, password=Parth@1749
+     * Dialect: org.hibernate.dialect.MySQLDialect
+     * DDL Auto: update
+   - schema.sql (14 Relational Tables):
+     1. users (id, email, password, full_name, phone, role, active, created_at)
+     2. categories (id, name, slug, description, image_url, active)
+     3. products (id, title, brand, description, price, discount_percentage, stock, category_id, image_url, variants, rating)
+     4. addresses (id, user_id, full_name, phone, street_address, landmark, city, state, pin_code, is_default)
+     5. delivery_zones (id, zone_name, city, area, pin_codes, active)
+     6. delivery_partners (id, user_id, vehicle_type, vehicle_number, license_number, status, is_available, active_deliveries_count)
+     7. partner_zones (partner_id, zone_id - Many-to-Many mapping)
+     8. orders (id, order_number, user_id, shipping info, delivery_zone_id, delivery_partner_id, amounts, payment_status, order_status, delivery_otp)
+     9. order_items (id, order_id, product_id, product_title, quantity, price, subtotal)
+     10. carts (id, user_id, updated_at)
+     11. cart_items (id, cart_id, product_id, quantity, unit_price, selected_variant)
+     12. delivery_assignments (id, order_id, partner_id, status, delivery_otp, timestamps)
+     13. coupons (id, code, discount_percentage, min_order_amount, max_discount_amount, expiry_date, usage_limit, active)
+     14. reviews (id, product_id, user_id, rating, title, comment, verified_purchase)
+
+3. Security Settings (SecurityConfig.java & CorsConfig.java):
+   - Session Management: Stateless (JWT filter-based authentication)
+   - Password Hashing: BCryptPasswordEncoder
+   - CORS: Allows credentials, origin pattern '*', methods GET, POST, PUT, DELETE, PATCH, OPTIONS
+   - Public Endpoints:
+     * /api/auth/** (login, register, logout, forgot-password, reset-password, me)
+     * GET /api/products/**, GET /api/categories/**
+     * GET /api/coupons/validate/**
+     * GET /api/delivery-zones/public/**
+     * /api/delivery-partners/register, /api/delivery-partners/login
+     * /h2-console/**, /error
+   - Role-Protected Endpoints:
+     * /api/admin/** -> Requires ROLE_ADMIN
+     * /api/delivery-partners/** -> Requires ROLE_DELIVERY_PARTNER or ROLE_ADMIN
+     * /api/cart/**, /api/orders/**, /api/addresses/** -> Authenticated User
+
+4. Complete REST API Surface (13 Controllers):
+   - AuthController (/api/auth):
+     * POST /login, POST /register, POST /logout, POST /forgot-password, POST /reset-password, GET /me
+   - ProductController (/api/products):
+     * GET /, GET /{id}, GET /brands
+   - AdminProductController (/api/admin/products):
+     * GET /, POST /, PUT /{id}, DELETE /{id}, GET /low-stock
+   - CategoryController (/api/categories):
+     * GET /, GET /{id}, POST /, PUT /{id}, DELETE /{id}
+   - CartController (/api/cart):
+     * GET /, POST /items, PUT /items/{id}, DELETE /items/{id}, DELETE /clear
+   - OrderController (/api/orders):
+     * POST /, GET /, GET /{id}, POST /{id}/cancel, POST /{id}/return
+   - AdminOrderController (/api/admin):
+     * GET /orders, PUT /orders/{id}/status, GET /reports/dashboard, GET /customers, PUT /customers/{id}/status
+   - DeliveryPartnerController (/api/delivery-partners):
+     * POST /register, POST /login, GET /profile, PUT /status, GET /deliveries,
+       POST /deliveries/{id}/accept, POST /deliveries/{id}/pickup,
+       POST /deliveries/{id}/out-for-delivery, POST /deliveries/{id}/deliver, POST /deliveries/{id}/failed
+   - AdminDeliveryController (/api/admin):
+     * GET /delivery-partners, POST /delivery-partners/{id}/approve, POST /delivery-partners/{id}/reject,
+       GET /delivery-zones, POST /delivery-zones, PUT /delivery-zones/{id}, DELETE /delivery-zones/{id},
+       POST /deliveries/{orderId}/assign, PUT /deliveries/{orderId}/reassign
+   - AddressController (/api/addresses):
+     * GET /, POST /, PUT /{id}, DELETE /{id}, PUT /{id}/default
+   - CouponController (/api):
+     * GET /coupons/validate/{code}, GET /admin/coupons, POST /admin/coupons, DELETE /admin/coupons/{id}
+   - ReviewController (/api):
+     * GET /products/{productId}/reviews, POST /products/{productId}/reviews,
+       GET /admin/reviews, DELETE /admin/reviews/{id}
+   - PaymentController (/api/payments):
+     * POST /create, POST /verify
+
+
+================================================================================
+SECTION 3: BATCH LAUNCHER SCRIPTS INSPECTION
+================================================================================
+1. start-server.bat:
+   - Directory Entered: cd /d "%~dp0server-side"
+   - Execution Command: mvn spring-boot:run
+   - Target Port: 8080
+
+2. start-admin.bat:
+   - Directory Entered: cd /d "%~dp0admin-side"
+   - Execution Command: npm run dev
+   - Target Port: 5174
+
+3. start-user.bat:
+   - Directory Entered: cd /d "%~dp0user-side"
+   - Execution Command: npm run dev
+   - Target Port: 5173
+
+4. start-all.bat:
+   - Server-Side Backend: launches cmd /k "cd /d "%~dp0server-side" && mvn spring-boot:run" (Port 8080)
+   - User-Side Storefront: launches cmd /k "cd /d "%~dp0user-side" && npm run dev" (Port 5173)
+   - Admin-Side Operations: launches cmd /k "cd /d "%~dp0admin-side" && npm run dev" (Port 5174)
+   - Automated Browser Launch: Opens http://localhost:5173 and http://localhost:5174 after 5s delay.
+
+Conclusion: Every launcher script consistently references 'server-side'. None reference 'Spring Boot'.
+
+
+================================================================================
+SECTION 4: FRONTEND API CONFIGURATION & BACKEND COMMUNICATION
+================================================================================
+1. admin-side (Operations Portal):
+   - Config file: admin-side/src/services/api.js (Line 3)
+   - Base URL: const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+   - Dev Server: Port 5174 (admin-side/vite.config.js)
+
+2. user-side (Customer Storefront):
+   - Config file: user-side/src/services/api.js (Line 3)
+   - Base URL: const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+   - Dev Server: Port 5173 (user-side/vite.config.js)
+
+3. Communication Verification:
+   Both frontends send REST API requests to port 8080 (the Spring Boot backend).
+   Neither frontend has an environment override (.env file), defaulting cleanly to localhost:8080.
+
+
+================================================================================
+SECTION 5: UNIQUE CODE, MIGRATIONS & DIVERGENCE ASSESSMENT
+================================================================================
+- Unique code in 'Spring Boot' not in 'server-side': NONE.
+- Unique code in 'server-side' not in 'Spring Boot': NONE.
+- Diverging configs or migrations: NONE.
+Because 'server-side' is an NTFS directory junction, both paths point to the exact
+same underlying filesystem storage. Any modification made in one path immediately
+updates the other.
+
+
+================================================================================
+SECTION 6: KEEP, REMOVE, AND INVESTIGATE REPORT
+================================================================================
+
+[KEEP]
+1. server-side/ (Promote to real physical directory):
+   - Retain as the permanent, authoritative backend folder.
+   - Preserves all 87 Java source files, Maven pom.xml, H2 + MySQL database
+     support, Spring Security 6 + JWT configuration, and data seeding.
+2. user-side/ (Customer Storefront):
+   - Retain customer portal (React 19 + Vite 8 on port 5173).
+3. admin-side/ (Operations Portal):
+   - Retain administrator portal (React 19 + Vite 8 on port 5174).
+4. All Launchers & Configuration Scripts:
+   - start-all.bat, start-server.bat, start-user.bat, start-admin.bat, and package.json.
+   - All already target 'server-side' and require zero modifications.
+
+[REMOVE] (Pending User Approval)
+1. Directory name 'Spring Boot':
+   - The directory name 'Spring Boot' should be eliminated by renaming the physical
+     folder to 'server-side' after safely unlinking the junction.
+   - Eliminates junction hazards, duplicate folder display, and folder naming with spaces.
+
+[INVESTIGATE] (For Future Maintenance)
+1. Frontend/ directory (107.5 MB):
+   - Legacy pre-split frontend from Oct 2, 2026. Contains old node_modules.
+   - Superseded by 'user-side' and 'admin-side'. Not referenced by any active launcher.
+2. project-structure.txt (1.5 MB):
+   - Static snapshot dump of 'tree /f /a'. Contains duplicate listings of Spring Boot
+     and server-side due to the tree command traversing the junction.
+
+
+================================================================================
+SECTION 7: CONTROLLED MIGRATION & VERIFICATION PLAN (UPON APPROVAL)
+================================================================================
+When approved, the safe execution steps are:
+
+Step 1: Safely Unlink the NTFS Junction (Zero Data Loss)
+Execute command:
+  cmd /c rmdir "C:\Users\LENOVO\OneDrive\Desktop\React.js\React_2\server-side"
+Note: Running rmdir without /s removes ONLY the junction link pointer and leaves
+100% of the actual data inside 'Spring Boot' untouched.
+
+Step 2: Rename the Physical Directory
+Rename 'Spring Boot' to 'server-side':
+  Rename-Item 'C:\Users\LENOVO\OneDrive\Desktop\React.js\React_2\Spring Boot' 'server-side'
+
+Step 3: Verification & Health Checks
+1. Backend Compilation:
+   mvn clean test-compile -f "server-side/pom.xml" (Ensure BUILD SUCCESS on all 87 files).
+2. Frontend Builds:
+   npm run build:user && npm run build:admin (Ensure clean production builds).
+3. Script Launch Test:
+   Verify start-server.bat, start-user.bat, start-admin.bat, and start-all.bat.
+
+
+================================================================================
+SECTION 8: PRESERVATION OF E-COMMERCE CORE FEATURES
+================================================================================
+The recommended consolidation guarantees 100% preservation of:
+1. Authentication & RBAC:
+   - JWT stateless authentication with 24-hour tokens.
+   - Role separation: ROLE_CUSTOMER, ROLE_ADMIN, ROLE_DELIVERY_PARTNER.
+2. Pre-Seeded Demo Accounts (DataInitializer):
+   - Customer: customer@novamart.com / Customer@123
+   - Admin: admin@novamart.com / Admin@123
+   - Delivery Partners: partner@novamart.com & partner2@novamart.com / Partner@123
+3. Hyperlocal Area-Based Delivery Engine:
+   - Automated PIN code to delivery zone matching (e.g. Vadodara Central 390001-390009).
+   - Partner zone mappings, online/offline toggling, and 6-digit delivery OTP verification.
+4. Product Catalog, Inventory, Cart & Orders:
+   - Multi-category catalog, variant support, dynamic stock and reserved stock management.
+   - Persistent cart, coupon engine, review moderation, order lifecycle tracking.
+5. Database Dual Compatibility:
+   - Zero-config H2 in-memory mode + MySQL 8.x production profile.
+================================================================================

@@ -1,0 +1,34 @@
+{
+  "name": "novamart-ecommerce-platform",
+  "version": "1.0.0",
+  "description": "NovaMart - Enterprise B2C E-Commerce Web Application (Customer Storefront, Admin Portal, Delivery Partner Portal, Spring Boot REST API)",
+  "scripts": {
+    "start": "start-all.bat",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"BACKEND,FRONTEND\" -c \"cyan.bold,magenta.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:all": "start-all.bat",
+    "dev:windows": "start-all.bat",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && mvn spring-boot:run",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && mvn test-compile",
+    "build": "npm run build:frontend && npm run build:backend",
+    "clean:build": "scripts\\clean-build.bat"
+  },
+  "keywords": [
+    "ecommerce",
+    "b2c",
+    "spring-boot",
+    "react",
+    "vite",
+    "area-based-delivery",
+    "jwt",
+    "customer-storefront",
+    "admin-portal",
+    "delivery-partner"
+  ],
+  "author": "NovaMart Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

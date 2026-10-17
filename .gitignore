@@ -1,0 +1,63 @@
+# ======================================================================
+# NovaMart Root .gitignore
+# Prevents sensitive credentials, heavy binaries, and temporary files
+# from being committed to GitHub.
+# ======================================================================
+
+# Dependency Directories
+node_modules/
+*/node_modules/
+
+# Compiled Java / Maven artifacts
+target/
+*/target/
+server-side/
+*.class
+*.jar
+*.war
+*.ear
+
+# Frontend Build Outputs
+dist/
+dist-ssr/
+build/
+*/dist/
+
+# Local Backups & Scratch Files
+backup/
+*/backup/
+*.bak
+*.backup
+*.tmp
+project-structure.txt
+
+# Environment Variables & Secrets (CRITICAL: Never commit secrets)
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+!*/.env.example
+
+# IDE & Editor Configurations
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+desktop.ini
