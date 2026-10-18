@@ -18,6 +18,7 @@ import { OrderTrackingPage } from './pages/customer/OrderTrackingPage';
 import { CustomerDashboardPage } from './pages/customer/CustomerDashboardPage';
 import { LoginPage } from './pages/customer/LoginPage';
 import { RegisterPage } from './pages/customer/RegisterPage';
+import { ForgotPasswordPage } from './pages/customer/ForgotPasswordPage';
 
 // Delivery Partner Pages
 import { DeliveryPartnerRegisterPage } from './pages/delivery/DeliveryPartnerRegisterPage';
@@ -59,6 +60,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Customer Authenticated Routes */}
           <Route

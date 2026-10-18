@@ -83,9 +83,12 @@ export const LoginPage = () => {
           <div className="form-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
               <label style={{ margin: 0 }}>Password</label>
-              <span style={{ fontSize: '12px', color: '#007185', cursor: 'pointer' }}>
+              <Link
+                to="/forgot-password"
+                style={{ fontSize: '12px', color: '#007185', textDecoration: 'none', fontWeight: '500' }}
+              >
                 Forgot Password?
-              </span>
+              </Link>
             </div>
             <div style={{ position: 'relative' }}>
               <input
