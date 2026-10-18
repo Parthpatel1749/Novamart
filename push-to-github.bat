@@ -9,8 +9,11 @@ set "PATH=%LOCALAPPDATA%\Programs\Git\cmd;%PATH%"
 echo Staging any recent changes...
 git add .
 
+echo Committing any recent changes...
+git commit -m "Manual backup: %date% %time%" 2>nul
+
 echo Pushing to main branch on GitHub...
-git push -u origin main
+git push origin main
 
 if %errorlevel% equ 0 (
     echo.
