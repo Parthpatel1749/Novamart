@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { SubNavbar } from './components/SubNavbar';
@@ -6,33 +6,41 @@ import { AdminNavbar } from './components/AdminNavbar';
 import { Footer } from './components/Footer';
 import { PinLocationModal } from './components/PinLocationModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
-
-// Customer Pages
-import { HomePage } from './pages/customer/HomePage';
-import { ProductListingPage } from './pages/customer/ProductListingPage';
-import { ProductDetailPage } from './pages/customer/ProductDetailPage';
-import { CartPage } from './pages/customer/CartPage';
-import { CheckoutPage } from './pages/customer/CheckoutPage';
-import { OrderConfirmationPage } from './pages/customer/OrderConfirmationPage';
-import { OrderTrackingPage } from './pages/customer/OrderTrackingPage';
-import { CustomerDashboardPage } from './pages/customer/CustomerDashboardPage';
-import { LoginPage } from './pages/customer/LoginPage';
-import { RegisterPage } from './pages/customer/RegisterPage';
-import { ForgotPasswordPage } from './pages/customer/ForgotPasswordPage';
-
-// Delivery Partner Pages
-import { DeliveryPartnerRegisterPage } from './pages/delivery/DeliveryPartnerRegisterPage';
-import { DeliveryPartnerDashboardPage } from './pages/delivery/DeliveryPartnerDashboardPage';
-
-// Admin Pages
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
-import { AdminProductsPage } from './pages/admin/AdminProductsPage';
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminDeliveryPartnersPage } from './pages/admin/AdminDeliveryPartnersPage';
-import { AdminDeliveryZonesPage } from './pages/admin/AdminDeliveryZonesPage';
-import { AdminCouponsPage } from './pages/admin/AdminCouponsPage';
-import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { PortalSwitcher } from './components/PortalSwitcher';
+
+// Customer Pages (Lazy Loaded for 10k Concurrency Initial Bundle Optimization)
+const HomePage = lazy(() => import('./pages/customer/HomePage').then(m => ({ default: m.HomePage })));
+const ProductListingPage = lazy(() => import('./pages/customer/ProductListingPage').then(m => ({ default: m.ProductListingPage })));
+const ProductDetailPage = lazy(() => import('./pages/customer/ProductDetailPage').then(m => ({ default: m.ProductDetailPage })));
+const CartPage = lazy(() => import('./pages/customer/CartPage').then(m => ({ default: m.CartPage })));
+const CheckoutPage = lazy(() => import('./pages/customer/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
+const OrderConfirmationPage = lazy(() => import('./pages/customer/OrderConfirmationPage').then(m => ({ default: m.OrderConfirmationPage })));
+const OrderTrackingPage = lazy(() => import('./pages/customer/OrderTrackingPage').then(m => ({ default: m.OrderTrackingPage })));
+const CustomerDashboardPage = lazy(() => import('./pages/customer/CustomerDashboardPage').then(m => ({ default: m.CustomerDashboardPage })));
+const LoginPage = lazy(() => import('./pages/customer/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/customer/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/customer/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+
+// Delivery Partner Pages (Lazy Loaded)
+const DeliveryPartnerRegisterPage = lazy(() => import('./pages/delivery/DeliveryPartnerRegisterPage').then(m => ({ default: m.DeliveryPartnerRegisterPage })));
+const DeliveryPartnerDashboardPage = lazy(() => import('./pages/delivery/DeliveryPartnerDashboardPage').then(m => ({ default: m.DeliveryPartnerDashboardPage })));
+
+// Admin Pages (Lazy Loaded)
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage').then(m => ({ default: m.AdminProductsPage })));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage').then(m => ({ default: m.AdminOrdersPage })));
+const AdminDeliveryPartnersPage = lazy(() => import('./pages/admin/AdminDeliveryPartnersPage').then(m => ({ default: m.AdminDeliveryPartnersPage })));
+const AdminDeliveryZonesPage = lazy(() => import('./pages/admin/AdminDeliveryZonesPage').then(m => ({ default: m.AdminDeliveryZonesPage })));
+const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage').then(m => ({ default: m.AdminCouponsPage })));
+const AdminReviewsPage = lazy(() => import('./pages/admin/AdminReviewsPage').then(m => ({ default: m.AdminReviewsPage })));
+
+const PageLoadingFallback = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ width: '36px', height: '36px', border: '3px solid #f3f3f3', borderTop: '3px solid #ff9900', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    <span style={{ fontSize: '13px', color: '#565959', fontWeight: '500' }}>Loading NovaMart...</span>
+    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+  </div>
+);
 
 function App() {
   const location = useLocation();
@@ -52,7 +60,8 @@ function App() {
       )}
 
       <main style={{ flex: 1 }}>
-        <Routes>
+        <Suspense fallback={<PageLoadingFallback />}>
+          <Routes>
           {/* Public Customer Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductListingPage />} />
@@ -177,6 +186,7 @@ function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       <Footer />

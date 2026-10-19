@@ -117,10 +117,8 @@ export const AdminOrdersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((o) => {
-                const status = getOrderStatusInfo(o.orderStatus);
-                return (
-                  <tr key={o.id} style={{ borderBottom: '1px solid #eee' }}>
+              {filteredOrders.map((o) => (
+                <tr key={o.id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontWeight: '700', color: '#007185' }}>{o.orderNumber}</div>
                       <div style={{ fontSize: '11px', color: '#777' }}>{formatDate(o.createdAt)}</div>
@@ -209,8 +207,7 @@ export const AdminOrdersPage = () => {
                       </button>
                     </td>
                   </tr>
-                );
-              })}
+                ))}
             </tbody>
           </table>
         </div>

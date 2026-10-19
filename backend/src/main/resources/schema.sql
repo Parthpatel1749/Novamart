@@ -4,8 +4,8 @@
 -- Compatible with: MySQL 8.0+ / MariaDB / H2 (MySQL Mode)
 -- ====================================================================
 
-CREATE DATABASE IF NOT EXISTS ecommerce_db;
-USE ecommerce_db;
+-- CREATE DATABASE IF NOT EXISTS ecommerce_db;
+-- USE ecommerce_db;
 
 -- 1. USERS TABLE
 CREATE TABLE IF NOT EXISTS users (
@@ -212,3 +212,39 @@ CREATE TABLE IF NOT EXISTS reviews (
     CONSTRAINT fk_reviews_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
     CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
+
+-- ====================================================================
+-- PERFORMANCE INDEXES (FOR 10,000 CONCURRENT USERS SCALABILITY)
+-- ====================================================================
+
+-- Products Catalog Query & Filter Indexes
+CREATE INDEX IF NOT EXISTS idx_products_category ON products (category_id);
+CREATE INDEX IF NOT EXISTS idx_products_brand ON products (brand);
+CREATE INDEX IF NOT EXISTS idx_products_price ON products (price);
+CREATE INDEX IF NOT EXISTS idx_products_rating ON products (rating);
+CREATE INDEX IF NOT EXISTS idx_products_active ON products (active);
+CREATE INDEX IF NOT EXISTS idx_products_composite_filter ON products (active, category_id, price);
+
+-- Orders History, Status & Dispatch Indexes
+CREATE INDEX IF NOT EXISTS idx_orders_user_created ON orders (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (order_status);
+CREATE INDEX IF NOT EXISTS idx_orders_partner_created ON orders (delivery_partner_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_zone ON orders (delivery_zone_id);
+
+-- Order Items Relational Indexes
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items (order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items (product_id);
+
+-- Shopping Cart Fast Lookup Indexes
+CREATE INDEX IF NOT EXISTS idx_cart_items_cart ON cart_items (cart_id);
+CREATE INDEX IF NOT EXISTS idx_cart_items_product ON cart_items (product_id);
+
+-- Delivery Assignments Partner Tracking Indexes
+CREATE INDEX IF NOT EXISTS idx_assignments_partner_status ON delivery_assignments (partner_id, status);
+CREATE INDEX IF NOT EXISTS idx_assignments_order ON delivery_assignments (order_id);
+
+-- Customer Addresses & Reviews Fast Lookup Indexes
+CREATE INDEX IF NOT EXISTS idx_addresses_user ON addresses (user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews (product_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews (user_id);
+

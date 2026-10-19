@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { authAPI } from '../../services/api';
-import { AlertCircle, CheckCircle2, Eye, EyeOff, KeyRound, ArrowLeft, Mail, Shield, User, Truck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff, ArrowLeft, Shield, User, Truck, Info } from 'lucide-react';
 
 export const ForgotPasswordPage = () => {
-  const navigate = useNavigate();
-
   // Step 1: Email verification, Step 2: Set new password, Step 3: Success
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -16,7 +14,6 @@ export const ForgotPasswordPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   // Step 1: Submit email to check if user exists in database and generate reset token
   const handleEmailSubmit = async (e) => {
@@ -102,6 +99,28 @@ export const ForgotPasswordPage = () => {
         {step === 1 && (
           <>
             <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '10px' }}>Password assistance</h1>
+            
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+                backgroundColor: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '6px',
+                padding: '8px 10px',
+                fontSize: '12px',
+                color: '#0369a1',
+                marginBottom: '14px',
+                lineHeight: '1.4',
+              }}
+            >
+              <Info size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>
+                <strong>Educational Demo:</strong> This environment simulates password recovery via secure time-limited tokens without requiring external SMTP infrastructure.
+              </span>
+            </div>
+
             <p style={{ fontSize: '13px', color: '#565959', marginBottom: '18px', lineHeight: '1.4' }}>
               Enter the email address associated with your NovaMart account to reset your password.
             </p>

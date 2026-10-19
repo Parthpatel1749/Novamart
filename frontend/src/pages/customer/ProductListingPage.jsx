@@ -25,33 +25,54 @@ export const ProductListingPage = () => {
   const [sortBy, setSortBy] = useState(sortByParam || 'featured');
   const [viewMode, setViewMode] = useState('grid');
 
+  // Pagination State for 10,000 Concurrent User Scalability & Low DOM Memory Overhead
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
   useEffect(() => {
     setSelectedCategory(categoryParam);
   }, [categoryParam]);
 
+  // Fetch static categories & brands once on mount (eliminates duplicate API queries)
   useEffect(() => {
-    const fetchCatalog = async () => {
-      setLoading(true);
+    const fetchMetadata = async () => {
       try {
-        const [prodRes, catRes, brandRes] = await Promise.all([
-          productAPI.getProducts({
-            query: queryParam || undefined,
-            sortBy: sortBy !== 'featured' ? sortBy : undefined,
-          }),
+        const [catRes, brandRes] = await Promise.all([
           categoryAPI.getAll(),
           productAPI.getBrands(),
         ]);
-        if (prodRes?.data) setProducts(prodRes.data);
         if (catRes?.data) setCategories(catRes.data);
         if (brandRes?.data) setBrands(brandRes.data);
+      } catch (err) {
+        console.error('Error fetching catalog metadata:', err);
+      }
+    };
+    fetchMetadata();
+  }, []);
+
+  // Fetch products when search query or sort order changes
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const prodRes = await productAPI.getProducts({
+          query: queryParam || undefined,
+          sortBy: sortBy !== 'featured' ? sortBy : undefined,
+        });
+        if (prodRes?.data) setProducts(prodRes.data);
       } catch (err) {
         console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchCatalog();
+    fetchProducts();
   }, [queryParam, sortBy]);
+
+  // Reset pagination to first page whenever any filter or sorting criteria changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [queryParam, selectedCategory, selectedBrand, minRating, maxPrice, inStockOnly, sortBy]);
 
   // Client-side filtering
   const filteredProducts = products.filter((p) => {
@@ -64,6 +85,12 @@ export const ProductListingPage = () => {
     if (inStockOnly && p.stock <= 0) return false;
     return true;
   });
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div style={{ backgroundColor: '#fff', minHeight: '100vh', padding: '16px 0 60px' }}>
@@ -326,17 +353,89 @@ export const ProductListingPage = () => {
                 </button>
               </div>
             ) : (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(240px, 1fr))' : '1fr',
-                  gap: '20px',
-                }}
-              >
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(240px, 1fr))' : '1fr',
+                    gap: '20px',
+                  }}
+                >
+                  {paginatedProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      marginTop: '32px',
+                      paddingTop: '20px',
+                      borderTop: '1px solid #e7e7e7',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid #d5d9d9',
+                        backgroundColor: currentPage === 1 ? '#f7f8f8' : '#fff',
+                        color: currentPage === 1 ? '#888' : '#0f1111',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                      }}
+                    >
+                      ← Previous
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '6px',
+                          border: currentPage === pageNum ? '2px solid #e77600' : '1px solid #d5d9d9',
+                          backgroundColor: currentPage === pageNum ? '#fef8f2' : '#fff',
+                          color: currentPage === pageNum ? '#e77600' : '#0f1111',
+                          fontWeight: currentPage === pageNum ? '700' : '500',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                        }}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid #d5d9d9',
+                        backgroundColor: currentPage === totalPages ? '#f7f8f8' : '#fff',
+                        color: currentPage === totalPages ? '#888' : '#0f1111',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>

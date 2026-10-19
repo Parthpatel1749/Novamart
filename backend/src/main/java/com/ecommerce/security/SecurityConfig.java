@@ -66,8 +66,8 @@ public class SecurityConfig {
                 // Delivery Partner Registration and Login are open
                 .requestMatchers("/api/delivery-partners/register", "/api/delivery-partners/login").permitAll()
                 
-                // H2 Console & swagger/error
-                .requestMatchers("/h2-console/**", "/error").permitAll()
+                // H2 Console, actuator health & metrics, error
+                .requestMatchers("/h2-console/**", "/error", "/actuator/health", "/actuator/info", "/actuator/metrics/**", "/actuator/prometheus").permitAll()
                 
                 // Admin specific routes
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

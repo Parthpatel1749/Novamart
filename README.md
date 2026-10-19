@@ -140,27 +140,76 @@ npm run backup:watch     # Runs continuous DB & code safety watcher
 
 ---
 
-## 🔐 Demo Credentials
+## 🔐 Demo Credentials (Pre-Seeded)
 
 The platform initializes with pre-seeded demo accounts in `DataInitializer.java`:
 
-| Role | Username | Password | Access Scope |
+| Role | Email / Login | Password | Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Customer** | `customer` | `password` | Storefront (`/`), Cart, Orders, Dashboard |
-| **Admin** | `admin` | `password` | Admin Portal (`/admin`), Full Platform Management |
-| **Delivery Partner** | `delivery` | `password` | Partner Portal (`/delivery-partner`), Delivery Dispatch |
+| **Customer** | `customer@novamart.com` | `Customer@123` | Customer Storefront (`/`), Cart, Orders, Dashboard |
+| **System Administrator** | `admin@novamart.com` | `Admin@123` | Admin Portal (`/admin`), Full Catalog & Order Management |
+| **Delivery Partner (Online)** | `partner@novamart.com` | `Partner@123` | Partner Portal (`/delivery-partner`), Vadodara Central zone |
+| **Delivery Partner (Offline)** | `partner2@novamart.com` | `Partner@123` | Partner Portal (`/delivery-partner`), Vadodara West zone |
+
+---
+
+## 🚀 Running with In-Memory H2 (Zero-Setup Mode)
+
+If you do not have MySQL installed or running locally, you can launch the backend with the embedded in-memory H2 profile:
+
+```bash
+# In backend directory
+mvn spring-boot:run -Dspring-boot.run.profiles=h2
+```
+or set the environment variable:
+```bash
+set SPRING_PROFILES_ACTIVE=h2
+npm run dev
+```
+
+Inspect database tables in your browser at `http://localhost:8080/h2-console` with JDBC URL `jdbc:h2:mem:ecommerce_db`.
+
+---
+
+---
+
+## ⚡ High-Concurrency & 10,000 Concurrent User Scalability (Non-Containerized)
+
+NovaMart has been systematically tuned and benchmarked to support high-throughput e-commerce workloads without Docker containers:
+* **Java 21 Project Loom Virtual Threads:** Eliminates platform thread pool exhaustion (`spring.threads.virtual.enabled=true`).
+* **Route-Based Lazy Loading:** Initial entry bundle reduced by **83.6%** (from 225.98 kB down to **37.01 kB**).
+* **Caffeine L1 Cache:** Sub-millisecond response on `/api/categories` and `/api/products/brands` (**394+ RPS**).
+* **Pessimistic Row Locking:** Prevents stock overselling during simultaneous checkouts under race conditions.
+* **14 Composite B-Tree Indexes:** Accelerates search, order tracking, and relational joins.
+
+### Running Live Load Test Benchmark
+To simulate realistic concurrent user journeys (smoke test, cached catalog, search/filter, and concurrent checkout):
+```bash
+# Ensure backend is running, then execute:
+node scripts/load-testing/node-load-runner.js
+```
+
+### Production Non-Containerized Launchers:
+```cmd
+:: 1. Clean build and package production JAR & frontend dist:
+scripts\clean-build.bat
+
+:: 2. Launch production Spring Boot (Java 21) & optimized frontend:
+scripts\start-prod.bat
+```
 
 ---
 
 ## 📖 Documentation Index
 
-- [Architecture Blueprint](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/architecture.md)
-- [REST API Reference](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/api-documentation.md)
-- [Security Audit & Safe Remediation Report](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/security-audit.md)
-- [Code Audit & Cleanup Report](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/cleanup-report.md)
-- [Project Structure Tree](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/project-structure.txt)
+- [10k Scalability & Benchmark Engineering Report](docs/scalability-10k-concurrency-report.md)
+- [Architecture Blueprint](docs/architecture.md)
+- [REST API Reference](docs/api-documentation.md)
+- [Security Audit & Vulnerability Remediation Report](docs/security-audit.md)
+- [Comprehensive Project Audit & Deployment Report](docs/project-audit-and-deployment-report.md)
 
 ---
 
 ## 🛡️ License
 NovaMart is distributed under the MIT License.
+

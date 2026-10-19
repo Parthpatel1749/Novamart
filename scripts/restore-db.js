@@ -21,7 +21,7 @@ function restoreDatabase(targetFile = LATEST_FILE) {
   const port = process.env.DB_PORT || '3306';
   const dbName = process.env.DB_NAME || 'ecommerce_db';
   const user = process.env.DB_USERNAME || 'root';
-  const password = process.env.DB_PASSWORD || 'Parth@1749';
+  const password = process.env.DB_PASSWORD || '';
 
   console.log(`[DB-RESTORE] Restoring database '${dbName}' from: ${path.relative(process.cwd(), targetFile)}...`);
 

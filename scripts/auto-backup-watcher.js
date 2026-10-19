@@ -56,7 +56,7 @@ function getDbChecksums() {
   const port = process.env.DB_PORT || '3306';
   const dbName = process.env.DB_NAME || 'ecommerce_db';
   const user = process.env.DB_USERNAME || 'root';
-  const password = process.env.DB_PASSWORD || 'Parth@1749';
+  const password = process.env.DB_PASSWORD || '';
   const env = { ...process.env, MYSQL_PWD: password };
 
   try {
