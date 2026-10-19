@@ -30,6 +30,7 @@ public class AuthService {
     private final DeliveryPartnerRepository deliveryPartnerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final java.util.Set<String> usedResetTokens = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
@@ -159,6 +160,10 @@ public class AuthService {
             if (!tokenProvider.validatePasswordResetToken(request.getResetToken(), user.getEmail())) {
                 throw new BadRequestException("Invalid or expired password reset token");
             }
+            if (usedResetTokens.contains(request.getResetToken())) {
+                throw new BadRequestException("Password reset token has already been used");
+            }
+            usedResetTokens.add(request.getResetToken());
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));

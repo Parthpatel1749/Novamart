@@ -155,37 +155,39 @@ export const ForgotPasswordPage = () => {
             </div>
 
             {/* Quick Demo Accounts helper */}
-            <div style={{ marginTop: '22px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: '#767676', marginBottom: '8px', textAlign: 'center', textTransform: 'uppercase' }}>
-                Test with Database Accounts (1-Click)
+            {import.meta.env.DEV && (
+              <div style={{ marginTop: '22px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#767676', marginBottom: '8px', textAlign: 'center', textTransform: 'uppercase' }}>
+                  Test with Database Accounts (1-Click)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => fillEmail('customer@novamart.com')}
+                    className="btn-secondary"
+                    style={{ fontSize: '12px', padding: '6px', justifyContent: 'flex-start' }}
+                  >
+                    <User size={14} color="#007185" /> customer@novamart.com
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillEmail('admin@novamart.com')}
+                    className="btn-secondary"
+                    style={{ fontSize: '12px', padding: '6px', justifyContent: 'flex-start' }}
+                  >
+                    <Shield size={14} color="#cc0c39" /> admin@novamart.com
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillEmail('partner@novamart.com')}
+                    className="btn-secondary"
+                    style={{ fontSize: '12px', padding: '6px', justifyContent: 'flex-start' }}
+                  >
+                    <Truck size={14} color="#067d62" /> partner@novamart.com
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => fillEmail('customer@novamart.com')}
-                  className="btn-secondary"
-                  style={{ fontSize: '12px', padding: '6px', justifyContent: 'flex-start' }}
-                >
-                  <User size={14} color="#007185" /> customer@novamart.com
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillEmail('admin@novamart.com')}
-                  className="btn-secondary"
-                  style={{ fontSize: '12px', padding: '6px', justifyContent: 'flex-start' }}
-                >
-                  <Shield size={14} color="#cc0c39" /> admin@novamart.com
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillEmail('partner@novamart.com')}
-                  className="btn-secondary"
-                  style={{ fontSize: '12px', padding: '6px', justifyContent: 'flex-start' }}
-                >
-                  <Truck size={14} color="#067d62" /> partner@novamart.com
-                </button>
-              </div>
-            </div>
+            )}
           </>
         )}
 

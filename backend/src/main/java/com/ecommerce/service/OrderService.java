@@ -364,7 +364,7 @@ public class OrderService {
         return mapToPartnerDto(orderRepository.save(order));
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = BadRequestException.class)
     public OrderDto completeDelivery(Long orderId, Long partnerId, String inputOtp) {
         Order order = getPartnerOrder(orderId, partnerId);
 

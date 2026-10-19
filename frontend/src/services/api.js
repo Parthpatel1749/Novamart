@@ -39,6 +39,16 @@ api.interceptors.response.use(
         localStorage.removeItem('novamart_user');
       }
     }
+
+    if (error.response && error.response.status === 429) {
+      const retryAfter = error.response.headers?.['retry-after'];
+      const defaultMsg = error.response?.data?.message || 'Rate limit exceeded. Please wait a moment before trying again.';
+      const message = retryAfter 
+        ? `Rate limit exceeded. Please wait ${retryAfter} seconds before trying again.` 
+        : defaultMsg;
+      return Promise.reject(new Error(message));
+    }
+
     const message = error.response?.data?.message || error.response?.data?.error || error.message || 'An error occurred';
     return Promise.reject(new Error(message));
   }

@@ -5,6 +5,7 @@
 NovaMart is a high-performance B2C e-commerce platform built with a modern decoupled full-stack architecture:
 - **Frontend**: A unified Single Page Application (SPA) powered by React 19 and Vite running on port `5173`. It seamlessly hosts the Customer Storefront, the Operations & Admin Portal, and the Delivery Partner Portal under role-based route guards.
 - **Backend**: A robust Spring Boot 3.3.4 enterprise REST API running on port `8080`, providing stateless JWT authentication, role-based authorization, inventory management, order processing, and area-based delivery dispatching.
+- **Database & Reliability Engine**: MySQL relational database persistence with H2 zero-config development mode, supported by a continuous auto-backup watcher engine that maintains timestamped SQL dumps and point-in-time recovery capabilities.
 
 ---
 
@@ -65,7 +66,7 @@ React_2/
 │   │   ├── repository/           # Spring Data JPA Repositories
 │   │   ├── security/             # JWT filters, UserDetails, Security configs
 │   │   ├── service/              # Core business logic implementations
-│   │   └── EcommerceApplication.java # Spring Boot main runner
+│   │   └── Application.java      # Spring Boot main runner
 │   ├── src/main/resources/
 │   │   ├── application.properties# Main application configuration
 │   │   ├── application-mysql.properties # MySQL production configuration
@@ -73,24 +74,39 @@ React_2/
 │   ├── pom.xml                   # Maven dependencies & build configuration
 │   └── .env.example              # Environment variables template
 │
+├── database/                     # Database Reliability & SQL Snapshots
+│   └── backups/
+│       ├── history/              # Timestamped historical database backups
+│       └── ecommerce_db_latest.sql # Authoritative latest verified database dump
+│
 ├── scripts/                      # Developer Operations & Automation Scripts
-│   ├── start-all.bat             # Unified launcher (starts backend & frontend concurrently)
-│   ├── start-frontend.bat        # Starts only frontend dev server (port 5173)
+│   ├── auto-backup-watcher.js    # Continuous change detection & auto-backup watcher
+│   ├── backup-code.js            # Code snapshot backup utility
+│   ├── backup-db.js              # Database export & dump engine (mysqldump / fallback)
+│   ├── clean-build.bat           # Clean & compile verification suite
+│   ├── restore-db.js             # Database restoration runner
+│   ├── start-all.bat             # Unified launcher (starts backend, frontend & watcher)
 │   ├── start-backend.bat         # Starts only Spring Boot backend (port 8080)
-│   └── clean-build.bat           # Clean & compile verification suite
+│   └── start-frontend.bat        # Starts only frontend dev server (port 5173)
 │
 ├── docs/                         # Enterprise Architecture & API Documentation
 │   ├── architecture.md           # System architecture blueprint (this file)
 │   ├── api-documentation.md      # REST API endpoints & schemas
-│   └── security-audit.md         # Security audit & remediation checklist
+│   ├── cleanup-report.md         # Refactoring, consolidation & cleanup report
+│   ├── security-audit.md         # Security audit & remediation checklist
+│   └── backend-audit.txt         # Backend consolidation & verification record
+│
 ├── backup/                       # Unified archive for legacy frontend & backend backups
 │   ├── frontend/                 # Legacy admin-side & frontend backups
 │   └── backend/                  # Legacy Spring Boot backend backup
 │
 ├── start-all.bat                 # Root launcher wrapper
+├── start-auto-backup.bat         # Root auto-backup watcher runner
 ├── start-frontend.bat            # Root frontend launcher wrapper
 ├── start-backend.bat             # Root backend launcher wrapper
+├── push-to-github.bat            # Safe automated git commit & push script
 ├── package.json                  # Root monorepo orchestration scripts
+├── project-structure.txt         # Clean, maintained directory tree
 └── README.md                     # Project overview and getting started guide
 ```
 
@@ -133,3 +149,12 @@ The frontend routes are managed centrally in `frontend/src/App.jsx`:
 3. **Session Persistence**: Frontend stores JWT in `localStorage` through `AuthContext.jsx`.
 4. **Axios Interceptor**: `frontend/src/services/api.js` automatically attaches `Authorization: Bearer <token>` to outbound HTTP requests.
 5. **Role Guard**: `frontend/src/components/ProtectedRoute.jsx` intercepts route changes and redirects unauthorized users away from Admin or Delivery Partner views.
+
+---
+
+## 6. Continuous Data Safety & Auto-Backup System
+
+To prevent data loss and ensure rapid zero-downtime recovery:
+1. **Automated DB Snapshotting**: Running `scripts/backup-db.js` generates verified SQL dumps into `database/backups/ecommerce_db_latest.sql` and archives rolling backups in `database/backups/history/`.
+2. **Continuous Auto-Backup Watcher**: Running `scripts/auto-backup-watcher.js` (launched automatically via `start-all.bat` or `npm run backup:watch`) monitors active changes and periodically creates safe snapshots without interrupting ongoing development.
+3. **Database Restore**: `scripts/restore-db.js` allows one-command restoration of the database snapshot into MySQL.

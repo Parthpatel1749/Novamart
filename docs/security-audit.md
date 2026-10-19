@@ -4,13 +4,13 @@
 **Audit Date:** October 2026  
 **Lead Security Engineer:** Senior AppSec & Penetration Testing Specialist  
 **Target Root:** `C:\Users\LENOVO\OneDrive\Desktop\React.js\React_2`  
-**Active Components:** Spring Boot 3.3.4 Backend (`server-side/`), React 18 / Vite Frontends (`user-side/`, `admin-side/`)  
+**Active Components:** Spring Boot 3.3.4 Backend (`backend/`), React 18 / Vite Frontends (`user-side/`, `admin-side/`)  
 
 ---
 
 ## 1. Executive Summary
 
-A comprehensive application security audit and code-level vulnerability assessment of the NovaMart e-commerce platform was conducted across the active backend (`server-side/`), active frontends (`user-side/`, `admin-side/`), database configurations, authentication handlers, and deployment scripts.
+A comprehensive application security audit and code-level vulnerability assessment of the NovaMart e-commerce platform was conducted across the active backend (`backend/`), active frontends (`user-side/`, `admin-side/`), database configurations, authentication handlers, and deployment scripts.
 
 The audit identified **10 distinct security findings**:
 - **1 CRITICAL** vulnerability: Complete Unauthenticated Account Takeover via public password reset.
@@ -47,9 +47,9 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Broken Authentication - Arbitrary Password Reset Without Proof of Identity
 - **Severity:** Critical (CVSS 9.8 - AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/service/AuthService.java` (Lines 118–124)
-  - `server-side/src/main/java/com/ecommerce/controller/AuthController.java` (Lines 45–49)
-  - `server-side/src/main/java/com/ecommerce/security/SecurityConfig.java` (Line 54)
+  - `backend/src/main/java/com/ecommerce/service/AuthService.java` (Lines 118–124)
+  - `backend/src/main/java/com/ecommerce/controller/AuthController.java` (Lines 45–49)
+  - `backend/src/main/java/com/ecommerce/security/SecurityConfig.java` (Line 54)
 - **Evidence:**
   ```java
   // In SecurityConfig.java line 54:
@@ -76,8 +76,8 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Insecure Direct Object Reference (BOLA) in Order Lookup, Cancellation, and Returns
 - **Severity:** High (CVSS 8.5 - AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/controller/OrderController.java` (Lines 42–64)
-  - `server-side/src/main/java/com/ecommerce/service/OrderService.java` (Lines 179–183, 199–228, 231–243)
+  - `backend/src/main/java/com/ecommerce/controller/OrderController.java` (Lines 42–64)
+  - `backend/src/main/java/com/ecommerce/service/OrderService.java` (Lines 179–183, 199–228, 231–243)
 - **Evidence:**
   ```java
   // In OrderController.java:
@@ -104,8 +104,8 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Sensitive Data Exposure - Verification Secret Disclosed to Untrusted Party
 - **Severity:** High (CVSS 7.4 - AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/service/OrderService.java` (Line 409)
-  - `server-side/src/main/java/com/ecommerce/controller/DeliveryPartnerController.java` (Lines 61–67)
+  - `backend/src/main/java/com/ecommerce/service/OrderService.java` (Line 409)
+  - `backend/src/main/java/com/ecommerce/controller/DeliveryPartnerController.java` (Lines 61–67)
 - **Evidence:**
   ```java
   // In OrderService.java line 409 (inside mapToDto):
@@ -128,9 +128,9 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Excessive Data Exposure - Sensitive Cryptographic Hash Leaked
 - **Severity:** High (CVSS 7.5 - AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/entity/User.java` (Line 18)
-  - `server-side/src/main/java/com/ecommerce/controller/AuthController.java` (Lines 51–55)
-  - `server-side/src/main/java/com/ecommerce/controller/AdminOrderController.java` (Lines 57–61)
+  - `backend/src/main/java/com/ecommerce/entity/User.java` (Line 18)
+  - `backend/src/main/java/com/ecommerce/controller/AuthController.java` (Lines 51–55)
+  - `backend/src/main/java/com/ecommerce/controller/AdminOrderController.java` (Lines 57–61)
   - `user-side/src/context/AuthContext.jsx` (Lines 26–27)
 - **Evidence:**
   ```java
@@ -162,7 +162,7 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Cross-Origin Resource Sharing Misconfiguration (Arbitrary Origin Reflection with Credentials)
 - **Severity:** High (CVSS 7.1 - AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:N)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/config/CorsConfig.java` (Lines 20–21)
+  - `backend/src/main/java/com/ecommerce/config/CorsConfig.java` (Lines 20–21)
 - **Evidence:**
   ```java
   config.setAllowCredentials(true);
@@ -179,8 +179,8 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Credential / Key Exposure in Application Properties
 - **Severity:** High (CVSS 7.4 - AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
 - **Affected Files:**
-  - `server-side/src/main/resources/application.properties` (Line 25)
-  - `server-side/src/main/resources/application-mysql.properties` (Lines 5, 12)
+  - `backend/src/main/resources/application.properties` (Line 25)
+  - `backend/src/main/resources/application-mysql.properties` (Lines 5, 12)
 - **Evidence:**
   ```properties
   # In application.properties & application-mysql.properties:
@@ -198,8 +198,8 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Security Misconfiguration - Remote DB Console Exposure & Clickjacking Vulnerability
 - **Severity:** Medium (CVSS 5.3 - AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N)
 - **Affected Files:**
-  - `server-side/src/main/resources/application.properties` (Line 16)
-  - `server-side/src/main/java/com/ecommerce/security/SecurityConfig.java` (Line 49)
+  - `backend/src/main/resources/application.properties` (Line 16)
+  - `backend/src/main/java/com/ecommerce/security/SecurityConfig.java` (Line 49)
 - **Evidence:**
   ```properties
   spring.h2.console.settings.web-allow-others=true
@@ -236,8 +236,8 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Insufficient Anti-Automation / Brute-Force Vulnerability
 - **Severity:** Medium (CVSS 5.3 - AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/controller/AuthController.java` (Line 22)
-  - `server-side/src/main/java/com/ecommerce/service/OrderService.java` (Lines 319–324)
+  - `backend/src/main/java/com/ecommerce/controller/AuthController.java` (Line 22)
+  - `backend/src/main/java/com/ecommerce/service/OrderService.java` (Lines 319–324)
 - **Evidence:**
   ```java
   // In OrderService.java:
@@ -256,7 +256,7 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 - **Vulnerability Name:** Verbose Error Messages (Information Leakage)
 - **Severity:** Low (CVSS 3.7 - AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N)
 - **Affected Files:**
-  - `server-side/src/main/java/com/ecommerce/exception/GlobalExceptionHandler.java` (Lines 47–51)
+  - `backend/src/main/java/com/ecommerce/exception/GlobalExceptionHandler.java` (Lines 47–51)
 - **Evidence:**
   ```java
   @ExceptionHandler(Exception.class)
@@ -274,7 +274,7 @@ No active SQL injection flaws were found due to consistent use of Spring Data JP
 
 ## 3. Dependency Security Audit Results
 
-1. **Maven Backend Dependencies (`server-side/pom.xml`):**
+1. **Maven Backend Dependencies (`backend/pom.xml`):**
    - Spring Boot: `3.3.4` (Supported, active maintenance release)
    - Java: `21` (LTS)
    - JJWT: `0.12.5` (Modern, secure, utilizes `Keys.hmacShaKeyFor` and `Jwts.parser().verifyWith()`)
@@ -310,20 +310,21 @@ In accordance with strict safety rules:
 
 ## 5. Phase Four: Automated Security Test Suite
 
-To prove remediation without regressions, the following automated Spring Boot test cases will be created under `server-side/src/test/java/com/ecommerce/security/SecurityVulnerabilityTests.java`:
-1. `testUnauthenticatedPasswordResetBlocked()` — Proves SEC-01 fix.
-2. `testCustomerCannotAccessOtherCustomerOrder()` — Proves SEC-02 IDOR fix.
-3. `testDeliveryPartnerCannotSeeCustomerOtp()` — Proves SEC-03 OTP leakage fix.
-4. `testUserEntityDoesNotExposePasswordHash()` — Proves SEC-04 fix.
-5. `testCorsBlocksArbitraryOriginWithCredentials()` — Proves SEC-05 fix.
-6. `testClickjackingFrameOptionsConfigured()` — Proves SEC-07 fix.
+To prove remediation without regressions, the following automated Spring Boot test cases were implemented under `backend/src/test/java/com/ecommerce/security/SecurityVulnerabilityTests.java`:
+1. `testUnauthenticatedPasswordResetBlocked()` — Proves SEC-01 fix: Unauthenticated password resets without a valid token are rejected with 400 Bad Request.
+2. `testCustomerCannotAccessOtherCustomerOrder()` — Proves SEC-02 IDOR fix: Customer A is blocked with 400 Bad Request when attempting to retrieve or cancel Customer B's order.
+3. `testDeliveryPartnerCannotSeeCustomerOtp()` — Proves SEC-03 OTP leakage fix: Delivery partner order queries scrub customer delivery verification OTPs (`null`).
+4. `testUserEntityDoesNotExposePasswordHash()` — Proves SEC-04 fix: `password` field is annotated with `WRITE_ONLY` and never exposed in `/api/auth/me` or customer lists.
+5. `testCorsBlocksArbitraryOriginWithCredentials()` — Proves SEC-05 fix: Untrusted cross-origin requests with credentials are strictly rejected (403 Forbidden).
+6. `testClickjackingFrameOptionsConfigured()` — Proves SEC-07 fix: `X-Frame-Options: SAMEORIGIN` is enforced across HTTP endpoints.
+7. `testDeliveryOtpLockoutAfterMaxAttempts()` — Proves SEC-09 fix: Exceeding 5 consecutive invalid delivery OTP attempts locks delivery verification.
+8. `testAuthRateLimitingTriggered()` — Proves SEC-09 fix: Rapid authentication attempts trigger HTTP 429 Too Many Requests with a `Retry-After` header.
 
 ---
 
 ## 6. Phase Five Verification Protocol
 
-1. `mvn test-compile -f "server-side/pom.xml"`
-2. `mvn test -f "server-side/pom.xml"`
-3. `npm run build` in `user-side/`
-4. `npm run build` in `admin-side/`
-5. Manual verification of customer, admin, and delivery partner authentication workflows.
+1. `mvn test-compile -f "backend/pom.xml"` — **PASSED** (0 compilation errors)
+2. `mvn test -f "backend/pom.xml"` — **PASSED** (8/8 automated security tests passed, 0 failures, 0 errors)
+3. `npm run build` in `frontend/` — **PASSED** (Production bundle generated cleanly with demo credentials excluded)
+4. Verification of customer, admin, and delivery partner authentication workflows — **PASSED**

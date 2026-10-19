@@ -31,6 +31,7 @@ A production-ready, full-stack B2C e-commerce platform built strictly according 
 | **Delivery Partner** | `5173` | `http://localhost:5173/delivery-partner` | Assigned shipments, navigation & delivery status |
 | **Backend REST API** | `8080` | `http://localhost:8080/api` | Spring Boot REST API endpoints & JWT services |
 | **H2 Console (Dev)** | `8080` | `http://localhost:8080/h2-console` | In-memory database inspection tool |
+| **MySQL Database** | `3306` | `jdbc:mysql://localhost:3306/ecommerce_db` | Relational persistence with verified SQL dumps |
 
 ---
 
@@ -66,23 +67,37 @@ React_2/
 │   ├── pom.xml                   # Maven dependencies & build plugins
 │   └── .env.example              # Backend environment variables template
 │
-├── scripts/                      # Developer Automation & Launch Scripts
-│   ├── start-all.bat             # Unified launcher (starts backend & frontend concurrently)
-│   ├── start-frontend.bat        # Starts only frontend dev server (port 5173)
+├── database/                     # Database Reliability & SQL Snapshots
+│   └── backups/
+│       ├── history/              # Timestamped historical database backups
+│       └── ecommerce_db_latest.sql # Authoritative latest verified database dump
+│
+├── scripts/                      # Developer Automation, Launchers & Auto-Backup Watchers
+│   ├── auto-backup-watcher.js    # Continuous change detection & auto-backup watcher
+│   ├── backup-code.js            # Code snapshot backup utility
+│   ├── backup-db.js              # Database export & dump engine (mysqldump / fallback)
+│   ├── clean-build.bat           # Clean & compile verification suite
+│   ├── restore-db.js             # Database restoration runner
+│   ├── start-all.bat             # Unified launcher (starts backend, frontend & watcher)
 │   ├── start-backend.bat         # Starts only Spring Boot backend (port 8080)
-│   └── clean-build.bat           # Clean & compile verification suite
+│   └── start-frontend.bat        # Starts only frontend dev server (port 5173)
 │
 ├── docs/                         # Enterprise Documentation
 │   ├── architecture.md           # Architecture blueprint & directory guide
 │   ├── api-documentation.md      # REST API reference & schemas
-│   └── security-audit.md         # Vulnerability assessment & remediation guide
+│   ├── cleanup-report.md         # Refactoring, consolidation & cleanup report
+│   ├── security-audit.md         # Vulnerability assessment & remediation guide
+│   └── backend-audit.txt         # Backend consolidation & verification record
+│
 ├── backup/                       # Unified archive for legacy frontend & backend backups
 │   ├── frontend/                 # Legacy admin-side & frontend backups
 │   └── backend/                  # Legacy Spring Boot backend backup
 │
-├── start-all.bat                 # Convenient root wrapper
+├── start-all.bat                 # 1-Click root launcher (starts backend, frontend & backup watcher)
+├── start-auto-backup.bat         # 1-Click root auto-backup watcher runner
 ├── start-frontend.bat            # Convenient root frontend launcher
 ├── start-backend.bat             # Convenient root backend launcher
+├── push-to-github.bat            # Safe automated git commit & push script
 ├── package.json                  # Root monorepo orchestration scripts
 └── project-structure.txt         # Clean, maintained directory tree
 ```
@@ -97,7 +112,7 @@ React_2/
 - **Maven**: 3.9+
 - **MySQL** (optional; in-memory H2 database is pre-configured for instant zero-setup dev)
 
-### Starting Both Services Together (2 Options)
+### Starting Services Together
 
 #### Option 1: Live Terminal Output (Concurrent Logs)
 ```bash
@@ -105,19 +120,22 @@ npm run dev
 ```
 Starts both the Spring Boot Backend (port `8080`) and Vite Frontend (port `5173`) concurrently inside your active terminal using live colored prefixes (`[BACKEND]` in cyan, `[FRONTEND]` in magenta). Pressing `Ctrl+C` cleanly terminates both services.
 
-#### Option 2: 1-Click Launch (Separate Windows + Auto Browser Launch)
+#### Option 2: 1-Click Launch (Dedicated Windows + Auto-Backup Watcher + Auto Browser Launch)
 Double-click:
 ```cmd
 start-all.bat
 ```
 *(or run `npm start` / `npm run dev:windows`)*
-Launches backend and frontend in dedicated console windows, waits for startup, and automatically opens `http://localhost:5173/` in your browser.
+Launches backend, frontend, and continuous auto-backup watcher in dedicated console windows, waits for startup, and automatically opens `http://localhost:5173/` in your browser.
 
-#### Individual Service Commands:
+#### Individual Service & Backup Commands:
 ```bash
-npm run dev:frontend   # Starts only React/Vite on http://localhost:5173
-npm run dev:backend    # Starts only Spring Boot on http://localhost:8080
-npm run build          # Builds frontend & compiles backend
+npm run dev:frontend     # Starts only React/Vite on http://localhost:5173
+npm run dev:backend      # Starts only Spring Boot on http://localhost:8080
+npm run build            # Builds frontend & compiles backend
+npm run backup:db        # Creates instant verified snapshot in database/backups/
+npm run restore:db       # Restores database from latest verified SQL snapshot
+npm run backup:watch     # Runs continuous DB & code safety watcher
 ```
 
 ---
@@ -139,6 +157,7 @@ The platform initializes with pre-seeded demo accounts in `DataInitializer.java`
 - [Architecture Blueprint](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/architecture.md)
 - [REST API Reference](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/api-documentation.md)
 - [Security Audit & Safe Remediation Report](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/security-audit.md)
+- [Code Audit & Cleanup Report](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/docs/cleanup-report.md)
 - [Project Structure Tree](file:///c:/Users/LENOVO/OneDrive/Desktop/React.js/React_2/project-structure.txt)
 
 ---
