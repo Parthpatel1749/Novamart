@@ -7,10 +7,10 @@ echo           Starting NovaMart E-Commerce Platform (Port 5173 ^& 8080)
 echo ======================================================================
 echo.
 echo [1/2] Starting Spring Boot Backend on http://localhost:8080...
-start "NovaMart Backend [8080]" /D "%ROOT%backend" cmd /k mvn spring-boot:run
+start "NovaMart Backend [8080]" cmd /k "call %ROOT%scripts\start-backend.bat"
 
 echo [2/3] Starting NovaMart Unified Frontend on http://localhost:5173...
-start "NovaMart Frontend [5173]" /D "%ROOT%frontend" cmd /k npm run dev
+start "NovaMart Frontend [5173]" cmd /k "call %ROOT%scripts\start-frontend.bat"
 
 echo [3/3] Starting NovaMart Continuous Auto-Backup (DB ^& Code Safety)...
 start "NovaMart Auto-Backup Watcher" /D "%ROOT%" cmd /k node scripts/auto-backup-watcher.js
