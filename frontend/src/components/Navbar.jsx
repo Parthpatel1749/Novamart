@@ -187,7 +187,8 @@ export const Navbar = () => {
               }}
               style={{
                 display: 'flex',
-                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
                 padding: '6px 10px',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -195,12 +196,29 @@ export const Navbar = () => {
               }}
               className="nav-link-hover"
             >
-              <span style={{ fontSize: '12px', color: '#ccc' }}>
-                Hello, {isAuthenticated ? user?.fullName?.split(' ')[0] : 'Sign In'}
-              </span>
-              <span style={{ fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '2px', color: '#fff' }}>
-                Account & Lists <ChevronDown size={15} />
-              </span>
+              {isAuthenticated && user?.pictureUrl ? (
+                <img
+                  src={user.pictureUrl}
+                  alt={user.fullName || 'User avatar'}
+                  referrerPolicy="no-referrer"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '1.5px solid #febd69',
+                    flexShrink: 0,
+                  }}
+                />
+              ) : null}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '12px', color: '#ccc' }}>
+                  Hello, {isAuthenticated ? user?.fullName?.split(' ')[0] : 'Sign In'}
+                </span>
+                <span style={{ fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '2px', color: '#fff' }}>
+                  Account & Lists <ChevronDown size={15} />
+                </span>
+              </div>
             </div>
 
             {/* Flyout Menu */}
@@ -237,13 +255,35 @@ export const Navbar = () => {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                    <div style={{ fontWeight: '700', fontSize: '15px' }}>{user?.fullName}</div>
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{user?.email}</div>
-                    <div style={{ marginTop: '6px' }}>
-                      <span className="badge badge-info" style={{ fontSize: '11px' }}>
-                        {user?.role?.replace('ROLE_', '')}
-                      </span>
+                  <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    {user?.pictureUrl ? (
+                      <img
+                        src={user.pictureUrl}
+                        alt={user.fullName || 'Avatar'}
+                        referrerPolicy="no-referrer"
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '1px solid #ddd',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : null}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: '700', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.fullName}</div>
+                      <div style={{ fontSize: '12px', color: '#666', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</div>
+                      <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        <span className="badge badge-info" style={{ fontSize: '10px', padding: '2px 6px' }}>
+                          {user?.role?.replace('ROLE_', '')}
+                        </span>
+                        {user?.authProvider?.includes('GOOGLE') && (
+                          <span className="badge badge-success" style={{ fontSize: '10px', padding: '2px 6px', backgroundColor: '#e6f4ea', color: '#137333', border: '1px solid #ceead6' }}>
+                            Google Linked
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

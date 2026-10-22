@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(255),
     role VARCHAR(50) NOT NULL COMMENT 'ROLE_CUSTOMER, ROLE_ADMIN, ROLE_DELIVERY_PARTNER',
     active BOOLEAN DEFAULT TRUE,
+    google_id VARCHAR(255) UNIQUE,
+    picture_url VARCHAR(1000),
+    email_verified BOOLEAN DEFAULT FALSE,
+    auth_provider VARCHAR(50) DEFAULT 'LOCAL',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -247,4 +251,5 @@ CREATE INDEX IF NOT EXISTS idx_assignments_order ON delivery_assignments (order_
 CREATE INDEX IF NOT EXISTS idx_addresses_user ON addresses (user_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews (product_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews (user_id);
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id);
 

@@ -54,6 +54,9 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
+                // Authenticated user actions under /api/auth
+                .requestMatchers("/api/auth/me", "/api/auth/google/unlink").authenticated()
+
                 // Public authentication and recovery endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 

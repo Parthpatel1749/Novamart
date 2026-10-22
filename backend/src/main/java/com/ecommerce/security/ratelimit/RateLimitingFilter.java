@@ -85,6 +85,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         // Tier 1: Authentication & Sensitive Credentials
         if (path.startsWith("/api/auth/login") ||
             path.startsWith("/api/auth/register") ||
+            path.startsWith("/api/auth/google") ||
             path.startsWith("/api/auth/forgot-password") ||
             path.startsWith("/api/auth/reset-password") ||
             path.startsWith("/api/delivery-partners/login") ||

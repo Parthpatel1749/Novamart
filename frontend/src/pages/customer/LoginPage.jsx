@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AlertCircle, Shield, Truck, User, Eye, EyeOff } from 'lucide-react';
+import { GoogleSignInButton } from '../../components/GoogleSignInButton';
+import { GoogleAccountLinkModal } from '../../components/GoogleAccountLinkModal';
 
 export const LoginPage = () => {
-  const { login, loading } = useAuth();
+  const { login, googleLogin, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -13,21 +15,44 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [linkingData, setLinkingData] = useState(null);
+
+  const handleRedirect = (user) => {
+    if (user?.role === 'ROLE_ADMIN') {
+      navigate('/admin');
+    } else if (user?.role === 'ROLE_DELIVERY_PARTNER') {
+      navigate('/delivery-partner');
+    } else {
+      navigate(from, { replace: true });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
       const user = await login(email, password);
-      if (user.role === 'ROLE_ADMIN') {
-        navigate('/admin');
-      } else if (user.role === 'ROLE_DELIVERY_PARTNER') {
-        navigate('/delivery-partner');
-      } else {
-        navigate(from, { replace: true });
-      }
+      handleRedirect(user);
     } catch (err) {
       setError(err.message || 'Login failed. Please verify your credentials.');
+    }
+  };
+
+  const handleGoogleSuccess = async (idToken) => {
+    setError('');
+    try {
+      const result = await googleLogin(idToken);
+      if (result?.linkingRequired) {
+        setLinkingData({
+          email: result.email,
+          fullName: result.fullName,
+          idToken,
+        });
+        return;
+      }
+      handleRedirect(result);
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed. Please try again.');
     }
   };
 
@@ -58,7 +83,7 @@ export const LoginPage = () => {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '20px' }}>Sign in</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '16px', textAlign: 'center' }}>Sign in</h1>
 
         {error && (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', backgroundColor: '#fff5f5', border: '1px solid #fed7d7', padding: '10px', borderRadius: '6px', color: '#c53030', fontSize: '13px', marginBottom: '16px' }}>
@@ -137,9 +162,25 @@ export const LoginPage = () => {
           By continuing, you agree to NovaMart's Conditions of Use and Privacy Notice.
         </div>
 
+        <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', color: '#767676', fontSize: '12px' }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e7e7' }} />
+          <span style={{ padding: '0 8px' }}>or</span>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e7e7' }} />
+        </div>
+
+        {/* Google One-Click Sign-In */}
+        <div>
+          <GoogleSignInButton
+            text="signin_with"
+            onSuccess={handleGoogleSuccess}
+            onError={(msg) => setError(msg)}
+            disabled={loading}
+          />
+        </div>
+
         {/* Demo Credentials Quick-Fill Box */}
         {import.meta.env.DEV && (
-          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #eee' }}>
             <div style={{ fontSize: '12px', fontWeight: '700', color: '#555', marginBottom: '8px', textAlign: 'center' }}>
               QUICK DEMO LOGINS (1-Click)
             </div>
@@ -200,8 +241,8 @@ export const LoginPage = () => {
       </div>
 
       {/* New to NovaMart */}
-      <div style={{ width: '100%', maxWidth: '380px', marginTop: '24px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', margin: '14px 0', color: '#767676', fontSize: '12px' }}>
+      <div style={{ width: '100%', maxWidth: '380px', marginTop: '12px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '6px 0 12px 0', color: '#767676', fontSize: '12px' }}>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e7e7' }} />
           <span style={{ padding: '0 8px' }}>New to NovaMart?</span>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e7e7' }} />
@@ -215,6 +256,19 @@ export const LoginPage = () => {
           Create your NovaMart account
         </Link>
       </div>
+
+      {/* Account Linking Modal */}
+      <GoogleAccountLinkModal
+        isOpen={!!linkingData}
+        email={linkingData?.email}
+        fullName={linkingData?.fullName}
+        idToken={linkingData?.idToken}
+        onSuccess={(authData) => {
+          setLinkingData(null);
+          handleRedirect(authData);
+        }}
+        onClose={() => setLinkingData(null)}
+      />
     </div>
   );
 };

@@ -326,6 +326,18 @@ public class OrderService {
             throw new BadRequestException("Partner must be ACTIVE and approved");
         }
 
+        if (order.getOrderStatus() == OrderStatus.DELIVERED) {
+            throw new BadRequestException("Cannot assign or reassign a delivery partner to an order that is already DELIVERED.");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new BadRequestException("Cannot assign or reassign a delivery partner to a CANCELLED order.");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.RETURNED || order.getOrderStatus() == OrderStatus.REFUNDED) {
+            throw new BadRequestException("Cannot assign or reassign a delivery partner to a closed order (" + order.getOrderStatus() + ").");
+        }
+
         if (order.getDeliveryPartner() != null && !order.getDeliveryPartner().getId().equals(partner.getId())) {
             DeliveryPartner oldPartner = order.getDeliveryPartner();
             oldPartner.setActiveDeliveriesCount(Math.max(0, oldPartner.getActiveDeliveriesCount() - 1));

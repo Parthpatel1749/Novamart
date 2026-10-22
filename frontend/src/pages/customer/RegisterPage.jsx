@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AlertCircle, Eye, EyeOff, Truck } from 'lucide-react';
+import { GoogleSignInButton } from '../../components/GoogleSignInButton';
+import { GoogleAccountLinkModal } from '../../components/GoogleAccountLinkModal';
 
 export const RegisterPage = () => {
-  const { register, loading } = useAuth();
+  const { register, googleLogin, loading } = useAuth();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
@@ -15,6 +17,7 @@ export const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [linkingData, setLinkingData] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,6 +42,24 @@ export const RegisterPage = () => {
     }
   };
 
+  const handleGoogleSuccess = async (idToken) => {
+    setError('');
+    try {
+      const result = await googleLogin(idToken);
+      if (result?.linkingRequired) {
+        setLinkingData({
+          email: result.email,
+          fullName: result.fullName,
+          idToken,
+        });
+        return;
+      }
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Google registration failed. Please try again.');
+    }
+  };
+
   return (
     <div style={{ backgroundColor: '#fff', minHeight: '90vh', padding: '40px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Link to="/" style={{ textDecoration: 'none', color: '#111', marginBottom: '24px' }}>
@@ -58,7 +79,7 @@ export const RegisterPage = () => {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '20px' }}>Create Account</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '16px', textAlign: 'center' }}>Create Account</h1>
 
         {error && (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', backgroundColor: '#fff5f5', border: '1px solid #fed7d7', padding: '10px', borderRadius: '6px', color: '#c53030', fontSize: '13px', marginBottom: '16px' }}>
@@ -194,7 +215,23 @@ export const RegisterPage = () => {
           </button>
         </form>
 
-        <div style={{ fontSize: '12px', color: '#565959', marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', color: '#767676', fontSize: '12px' }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e7e7' }} />
+          <span style={{ padding: '0 8px' }}>or</span>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#e7e7e7' }} />
+        </div>
+
+        {/* Google One-Click Registration */}
+        <div>
+          <GoogleSignInButton
+            text="signup_with"
+            onSuccess={handleGoogleSuccess}
+            onError={(msg) => setError(msg)}
+            disabled={loading}
+          />
+        </div>
+
+        <div style={{ fontSize: '12px', color: '#565959', marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Already have an account? <Link to="/login" style={{ color: '#007185' }}>Sign in</Link></span>
         </div>
 
@@ -224,6 +261,19 @@ export const RegisterPage = () => {
           </Link>
         </div>
       </div>
+
+      {/* Account Linking Modal */}
+      <GoogleAccountLinkModal
+        isOpen={!!linkingData}
+        email={linkingData?.email}
+        fullName={linkingData?.fullName}
+        idToken={linkingData?.idToken}
+        onSuccess={() => {
+          setLinkingData(null);
+          navigate('/');
+        }}
+        onClose={() => setLinkingData(null)}
+      />
     </div>
   );
 };

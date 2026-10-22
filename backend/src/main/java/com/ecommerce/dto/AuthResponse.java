@@ -12,6 +12,10 @@ public class AuthResponse {
     private Role role;
     private Long deliveryPartnerId;
     private String deliveryPartnerStatus;
+    private String pictureUrl;
+    private String authProvider;
+    private boolean linkingRequired = false;
+    private String existingEmail;
 
     public AuthResponse() {}
 
@@ -22,6 +26,16 @@ public class AuthResponse {
         this.fullName = fullName;
         this.phone = phone;
         this.role = role;
+    }
+
+    public static AuthResponse requireLinking(String email, String fullName, String pictureUrl) {
+        AuthResponse response = new AuthResponse();
+        response.setLinkingRequired(true);
+        response.setExistingEmail(email);
+        response.setEmail(email);
+        response.setFullName(fullName);
+        response.setPictureUrl(pictureUrl);
+        return response;
     }
 
     public String getToken() { return token; }
@@ -50,4 +64,16 @@ public class AuthResponse {
 
     public String getDeliveryPartnerStatus() { return deliveryPartnerStatus; }
     public void setDeliveryPartnerStatus(String deliveryPartnerStatus) { this.deliveryPartnerStatus = deliveryPartnerStatus; }
+
+    public String getPictureUrl() { return pictureUrl; }
+    public void setPictureUrl(String pictureUrl) { this.pictureUrl = pictureUrl; }
+
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+    public boolean isLinkingRequired() { return linkingRequired; }
+    public void setLinkingRequired(boolean linkingRequired) { this.linkingRequired = linkingRequired; }
+
+    public String getExistingEmail() { return existingEmail; }
+    public void setExistingEmail(String existingEmail) { this.existingEmail = existingEmail; }
 }

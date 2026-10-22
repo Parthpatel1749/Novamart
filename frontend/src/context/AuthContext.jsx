@@ -63,6 +63,57 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (idToken) => {
+    setLoading(true);
+    try {
+      const res = await authAPI.googleAuth(idToken);
+      const authData = res.data;
+
+      // Check if secure linking is required for an existing account
+      if (authData.linkingRequired) {
+        return {
+          linkingRequired: true,
+          email: authData.existingEmail || authData.email,
+          fullName: authData.fullName,
+          pictureUrl: authData.pictureUrl,
+        };
+      }
+
+      setToken(authData.token);
+      setUser(authData);
+      localStorage.setItem('novamart_token', authData.token);
+      localStorage.setItem('novamart_user', JSON.stringify(authData));
+      return authData;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const linkGoogle = async (idToken, password) => {
+    setLoading(true);
+    try {
+      const res = await authAPI.linkGoogle(idToken, password);
+      const authData = res.data;
+      setToken(authData.token);
+      setUser(authData);
+      localStorage.setItem('novamart_token', authData.token);
+      localStorage.setItem('novamart_user', JSON.stringify(authData));
+      return authData;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const unlinkGoogle = async () => {
+    setLoading(true);
+    try {
+      await authAPI.unlinkGoogle();
+      updateUserProfile({ googleId: null, authProvider: 'LOCAL' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateUserProfile = (newDetails) => {
     const updated = { ...user, ...newDetails };
     setUser(updated);
@@ -86,6 +137,9 @@ export const AuthProvider = ({ children }) => {
         isCustomer,
         login,
         register,
+        googleLogin,
+        linkGoogle,
+        unlinkGoogle,
         logout,
         updateUserProfile,
       }}
