@@ -4,13 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { User, Shield, Truck, LogOut, CheckCircle, Zap } from 'lucide-react';
 
 export const PortalSwitcher = ({ currentPortal = 'user' }) => {
-  if (!import.meta.env.DEV) {
-    return null;
-  }
-
   const { user, isAuthenticated, login, logout } = useAuth();
   const [switchingRole, setSwitchingRole] = useState(null);
   const navigate = useNavigate();
+
+  if (!import.meta.env.DEV) {
+    return null;
+  }
 
   const handleQuickLogin = async (email, password, roleTarget) => {
     try {

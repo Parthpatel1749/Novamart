@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminOrderAPI, adminDeliveryAPI } from '../../services/api';
 import { formatPrice, formatDate } from '../../utils/formatters';
-import { Truck, RefreshCw, KeyRound, UserCheck } from 'lucide-react';
+import { Truck, RefreshCw, KeyRound, UserCheck, CheckCircle2 } from 'lucide-react';
 
 export const AdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -117,10 +117,8 @@ export const AdminOrdersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((o) => {
-                const status = getOrderStatusInfo(o.orderStatus);
-                return (
-                  <tr key={o.id} style={{ borderBottom: '1px solid #eee' }}>
+              {filteredOrders.map((o) => (
+                <tr key={o.id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontWeight: '700', color: '#007185' }}>{o.orderNumber}</div>
                       <div style={{ fontSize: '11px', color: '#777' }}>{formatDate(o.createdAt)}</div>
@@ -197,20 +195,44 @@ export const AdminOrdersPage = () => {
                     </td>
 
                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => {
-                          setAssigningOrder(o);
-                          setSelectedPartnerId(o.deliveryPartnerId || (partners[0]?.id || ''));
-                        }}
-                        className="btn-secondary"
-                        style={{ fontSize: '12px', padding: '4px 10px' }}
-                      >
-                        <Truck size={13} /> {o.deliveryPartnerName ? 'Reassign' : 'Assign Partner'}
-                      </button>
+                      {['DELIVERED', 'CANCELLED', 'RETURNED', 'REFUNDED'].includes(o.orderStatus) ? (
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            padding: '4px 10px',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: o.orderStatus === 'DELIVERED' ? '#f0fdf4' : '#f9fafb',
+                            color: o.orderStatus === 'DELIVERED' ? '#067d62' : '#6b7280',
+                            border: `1px solid ${o.orderStatus === 'DELIVERED' ? '#bbf7d0' : '#e5e7eb'}`,
+                          }}
+                        >
+                          {o.orderStatus === 'DELIVERED' ? (
+                            <>
+                              <CheckCircle2 size={13} color="#059669" /> Delivered
+                            </>
+                          ) : (
+                            o.orderStatus
+                          )}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setAssigningOrder(o);
+                            setSelectedPartnerId(o.deliveryPartnerId || (partners[0]?.id || ''));
+                          }}
+                          className="btn-secondary"
+                          style={{ fontSize: '12px', padding: '4px 10px' }}
+                        >
+                          <Truck size={13} /> {o.deliveryPartnerName ? 'Reassign' : 'Assign Partner'}
+                        </button>
+                      )}
                     </td>
                   </tr>
-                );
-              })}
+                ))}
             </tbody>
           </table>
         </div>

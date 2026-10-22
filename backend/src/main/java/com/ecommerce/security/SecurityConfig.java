@@ -54,6 +54,9 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
+                // Authenticated user actions under /api/auth
+                .requestMatchers("/api/auth/me", "/api/auth/google/unlink").authenticated()
+
                 // Public authentication and recovery endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 
@@ -66,8 +69,8 @@ public class SecurityConfig {
                 // Delivery Partner Registration and Login are open
                 .requestMatchers("/api/delivery-partners/register", "/api/delivery-partners/login").permitAll()
                 
-                // H2 Console & swagger/error
-                .requestMatchers("/h2-console/**", "/error").permitAll()
+                // H2 Console, actuator health & metrics, error
+                .requestMatchers("/h2-console/**", "/error", "/actuator/health", "/actuator/info", "/actuator/metrics/**", "/actuator/prometheus").permitAll()
                 
                 // Admin specific routes
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

@@ -32,6 +32,18 @@ public class User {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
+    @Column(name = "picture_url", length = 1000)
+    private String pictureUrl;
+
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
+
+    @Column(name = "auth_provider")
+    private String authProvider = "LOCAL";
+
     public User() {}
 
     public User(String email, String password, String fullName, String phone, Role role) {
@@ -42,6 +54,8 @@ public class User {
         this.role = role;
         this.active = true;
         this.createdAt = LocalDateTime.now();
+        this.authProvider = "LOCAL";
+        this.emailVerified = false;
     }
 
     public Long getId() { return id; }
@@ -67,4 +81,16 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
+
+    public String getPictureUrl() { return pictureUrl; }
+    public void setPictureUrl(String pictureUrl) { this.pictureUrl = pictureUrl; }
+
+    public Boolean getEmailVerified() { return emailVerified; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
+
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
 }

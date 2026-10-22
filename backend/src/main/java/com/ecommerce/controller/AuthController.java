@@ -25,6 +25,21 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok("Login successful", response));
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
+        AuthResponse response = authService.googleLoginOrRegister(request);
+        String message = response.isLinkingRequired()
+                ? "Existing account found. Verification required to link your Google account."
+                : "Google authentication successful";
+        return ResponseEntity.ok(ApiResponse.ok(message, response));
+    }
+
+    @PostMapping("/google/link")
+    public ResponseEntity<ApiResponse<AuthResponse>> linkGoogle(@Valid @RequestBody GoogleLinkRequest request) {
+        AuthResponse response = authService.linkGoogleAccount(request);
+        return ResponseEntity.ok(ApiResponse.ok("Google account linked successfully", response));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
@@ -52,5 +67,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<User>> getCurrentUser() {
         User user = authService.getCurrentAuthenticatedUser();
         return ResponseEntity.ok(ApiResponse.ok("User profile retrieved", user));
+    }
+
+    @PostMapping("/google/unlink")
+    public ResponseEntity<ApiResponse<String>> unlinkGoogle() {
+        authService.unlinkGoogleAccount();
+        return ResponseEntity.ok(ApiResponse.ok("Google account disconnected successfully"));
     }
 }

@@ -3,6 +3,8 @@ package com.ecommerce.service;
 import com.ecommerce.entity.Category;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CategoryRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,20 +19,25 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(value = "categories")
     public List<Category> getAllCategories() {
         return categoryRepository.findByActiveTrue();
     }
 
+    @Transactional(readOnly = true)
     public List<Category> getAllCategoriesAdmin() {
         return categoryRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Category getCategoryById(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
     }
 
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public Category createCategory(Category category) {
         if (category.getSlug() == null || category.getSlug().isBlank()) {
             category.setSlug(category.getName().toLowerCase().replaceAll("[^a-z0-9]", "-"));
@@ -39,6 +46,7 @@ public class CategoryService {
     }
 
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public Category updateCategory(Long id, Category categoryDetails) {
         Category category = getCategoryById(id);
         category.setName(categoryDetails.getName());
@@ -52,6 +60,7 @@ public class CategoryService {
     }
 
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public void deleteCategory(Long id) {
         Category category = getCategoryById(id);
         categoryRepository.delete(category);

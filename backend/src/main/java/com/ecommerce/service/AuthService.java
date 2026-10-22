@@ -20,7 +20,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ecommerce.dto.GoogleAuthRequest;
+import com.ecommerce.dto.GoogleLinkRequest;
+import com.ecommerce.security.oauth2.GoogleTokenVerifierService;
+import com.ecommerce.security.oauth2.GoogleUserInfo;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -30,18 +38,21 @@ public class AuthService {
     private final DeliveryPartnerRepository deliveryPartnerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final GoogleTokenVerifierService googleTokenVerifierService;
     private final java.util.Set<String> usedResetTokens = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
                        DeliveryPartnerRepository deliveryPartnerRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtTokenProvider tokenProvider) {
+                       JwtTokenProvider tokenProvider,
+                       GoogleTokenVerifierService googleTokenVerifierService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.deliveryPartnerRepository = deliveryPartnerRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.googleTokenVerifierService = googleTokenVerifierService;
     }
 
     public AuthResponse login(AuthRequest request) {
@@ -55,25 +66,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        AuthResponse response = new AuthResponse(
-                token,
-                user.getId(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getPhone(),
-                user.getRole()
-        );
-
-        if (user.getRole() == Role.ROLE_DELIVERY_PARTNER) {
-            Optional<DeliveryPartner> partnerOpt = deliveryPartnerRepository.findByUserId(user.getId());
-            if (partnerOpt.isPresent()) {
-                DeliveryPartner dp = partnerOpt.get();
-                response.setDeliveryPartnerId(dp.getId());
-                response.setDeliveryPartnerStatus(dp.getStatus().name());
-            }
-        }
-
-        return response;
+        return buildAuthResponse(user, token);
     }
 
     @Transactional
@@ -99,14 +92,134 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         String token = tokenProvider.generateTokenFromEmail(savedUser.getEmail(), savedUser.getRole().name());
 
-        return new AuthResponse(
+        return buildAuthResponse(savedUser, token);
+    }
+
+    @Transactional
+    public AuthResponse googleLoginOrRegister(GoogleAuthRequest request) {
+        GoogleUserInfo googleUser = googleTokenVerifierService.verifyToken(request.getIdToken());
+        if (!googleUser.isEmailVerified()) {
+            throw new BadRequestException("Google account email is not verified. Please verify your email with Google.");
+        }
+
+        // 1. Check if identity is already linked by Google Subject ID
+        Optional<User> userByGoogleId = userRepository.findByGoogleId(googleUser.getSub());
+        if (userByGoogleId.isPresent()) {
+            User user = userByGoogleId.get();
+            if (!user.isActive()) {
+                throw new BadRequestException("Account has been deactivated. Please contact customer support.");
+            }
+
+            // Sync avatar or verified status if missing
+            boolean updated = false;
+            if (StringUtils.hasText(googleUser.getPictureUrl()) && !StringUtils.hasText(user.getPictureUrl())) {
+                user.setPictureUrl(googleUser.getPictureUrl());
+                updated = true;
+            }
+            if (user.getEmailVerified() == null || !user.getEmailVerified()) {
+                user.setEmailVerified(true);
+                updated = true;
+            }
+            if (updated) {
+                userRepository.save(user);
+            }
+
+            String token = tokenProvider.generateTokenFromEmail(user.getEmail(), user.getRole().name());
+            return buildAuthResponse(user, token);
+        }
+
+        // 2. Check if an account already exists with the same email
+        Optional<User> userByEmail = userRepository.findByEmail(googleUser.getEmail());
+        if (userByEmail.isPresent()) {
+            User existingUser = userByEmail.get();
+            // Secure account linking required: do not silently merge
+            return AuthResponse.requireLinking(
+                    existingUser.getEmail(),
+                    existingUser.getFullName(),
+                    googleUser.getPictureUrl()
+            );
+        }
+
+        // 3. New user registration via Google (Strictly safe default role: ROLE_CUSTOMER)
+        User newUser = new User();
+        newUser.setEmail(googleUser.getEmail());
+        newUser.setFullName(StringUtils.hasText(googleUser.getFullName())
+                ? googleUser.getFullName()
+                : googleUser.getEmail().split("@")[0]);
+        // Set secure unguessable random password to prevent null password issues in Spring Security
+        newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        newUser.setRole(Role.ROLE_CUSTOMER);
+        newUser.setActive(true);
+        newUser.setGoogleId(googleUser.getSub());
+        newUser.setPictureUrl(googleUser.getPictureUrl());
+        newUser.setEmailVerified(true);
+        newUser.setAuthProvider("GOOGLE");
+        newUser.setCreatedAt(LocalDateTime.now());
+
+        User savedUser = userRepository.save(newUser);
+        String token = tokenProvider.generateTokenFromEmail(savedUser.getEmail(), savedUser.getRole().name());
+        return buildAuthResponse(savedUser, token);
+    }
+
+    @Transactional
+    public AuthResponse linkGoogleAccount(GoogleLinkRequest request) {
+        GoogleUserInfo googleUser = googleTokenVerifierService.verifyToken(request.getIdToken());
+        if (!googleUser.isEmailVerified()) {
+            throw new BadRequestException("Google account email is not verified. Please verify your email with Google.");
+        }
+
+        User user = userRepository.findByEmail(googleUser.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + googleUser.getEmail()));
+
+        // Validate password of existing account
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadRequestException("Invalid password for existing account");
+        }
+
+        // Validate not already linked to another Google ID
+        if (StringUtils.hasText(user.getGoogleId()) && !user.getGoogleId().equals(googleUser.getSub())) {
+            throw new BadRequestException("This account is already linked to a different Google account");
+        }
+
+        // Ensure no other user is linked to this Google ID
+        Optional<User> otherUser = userRepository.findByGoogleId(googleUser.getSub());
+        if (otherUser.isPresent() && !otherUser.get().getId().equals(user.getId())) {
+            throw new BadRequestException("This Google account is already linked to another NovaMart user");
+        }
+
+        user.setGoogleId(googleUser.getSub());
+        if (StringUtils.hasText(googleUser.getPictureUrl())) {
+            user.setPictureUrl(googleUser.getPictureUrl());
+        }
+        user.setEmailVerified(true);
+        user.setAuthProvider("LOCAL_AND_GOOGLE");
+
+        User savedUser = userRepository.save(user);
+        String token = tokenProvider.generateTokenFromEmail(savedUser.getEmail(), savedUser.getRole().name());
+        return buildAuthResponse(savedUser, token);
+    }
+
+    private AuthResponse buildAuthResponse(User user, String token) {
+        AuthResponse response = new AuthResponse(
                 token,
-                savedUser.getId(),
-                savedUser.getEmail(),
-                savedUser.getFullName(),
-                savedUser.getPhone(),
-                savedUser.getRole()
+                user.getId(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getPhone(),
+                user.getRole()
         );
+        response.setPictureUrl(user.getPictureUrl());
+        response.setAuthProvider(user.getAuthProvider());
+
+        if (user.getRole() == Role.ROLE_DELIVERY_PARTNER) {
+            Optional<DeliveryPartner> partnerOpt = deliveryPartnerRepository.findByUserId(user.getId());
+            if (partnerOpt.isPresent()) {
+                DeliveryPartner dp = partnerOpt.get();
+                response.setDeliveryPartnerId(dp.getId());
+                response.setDeliveryPartnerStatus(dp.getStatus().name());
+            }
+        }
+        return response;
     }
 
     public String forgotPassword(String email) {
@@ -167,6 +280,9 @@ public class AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        if ("GOOGLE".equals(user.getAuthProvider())) {
+            user.setAuthProvider("LOCAL_AND_GOOGLE");
+        }
         userRepository.save(user);
     }
 
@@ -177,5 +293,19 @@ public class AuthService {
         }
         return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
+    }
+
+    @Transactional
+    public void unlinkGoogleAccount() {
+        User user = getCurrentAuthenticatedUser();
+        if (!StringUtils.hasText(user.getGoogleId())) {
+            throw new BadRequestException("No Google account is currently linked to your profile");
+        }
+        if ("GOOGLE".equals(user.getAuthProvider())) {
+            throw new BadRequestException("Please set a local account password before disconnecting Google sign-in");
+        }
+        user.setGoogleId(null);
+        user.setAuthProvider("LOCAL");
+        userRepository.save(user);
     }
 }

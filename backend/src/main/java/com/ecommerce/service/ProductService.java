@@ -6,6 +6,8 @@ import com.ecommerce.entity.Product;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CategoryRepository;
 import com.ecommerce.repository.ProductRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class ProductService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ProductDto> getProducts(String query, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice,
                                         Double minRating, String brand, String sortBy) {
         List<Product> products;
@@ -60,22 +63,26 @@ public class ProductService {
         return products.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ProductDto> getAllProductsAdmin() {
         return productRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
         return mapToDto(product);
     }
 
+    @Transactional(readOnly = true)
     public Product getProductEntityById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
     }
 
     @Transactional
+    @CacheEvict(value = {"brands", "categories"}, allEntries = true)
     public ProductDto createProduct(ProductDto dto) {
         Product product = new Product();
         mapDtoToEntity(dto, product);
@@ -84,6 +91,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"brands", "categories"}, allEntries = true)
     public ProductDto updateProduct(Long id, ProductDto dto) {
         Product product = getProductEntityById(id);
         mapDtoToEntity(dto, product);
@@ -92,15 +100,19 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"brands", "categories"}, allEntries = true)
     public void deleteProduct(Long id) {
         Product product = getProductEntityById(id);
         productRepository.delete(product);
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(value = "brands")
     public List<String> getAllBrands() {
         return productRepository.findDistinctBrands();
     }
 
+    @Transactional(readOnly = true)
     public List<ProductDto> getLowStockProducts(int threshold) {
         return productRepository.findByStockLessThan(threshold).stream()
                 .map(this::mapToDto)

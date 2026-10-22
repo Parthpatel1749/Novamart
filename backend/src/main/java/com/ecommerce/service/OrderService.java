@@ -55,7 +55,7 @@ public class OrderService {
     public OrderDto createOrder(User user, CreateOrderRequest request) {
         Order order = new Order();
         order.setUser(user);
-        order.setOrderNumber("ORD-" + (100000 + random.nextInt(900000)));
+        order.setOrderNumber("ORD-" + System.currentTimeMillis() + "-" + String.format("%04d", random.nextInt(10000)));
         order.setPaymentMethod(request.getPaymentMethod().toUpperCase());
         order.setPaymentStatus(request.getPaymentMethod().equalsIgnoreCase("COD") ? "PENDING" : "PAID");
         order.setOrderStatus(OrderStatus.CONFIRMED);
@@ -73,12 +73,12 @@ public class OrderService {
         order.setShippingState(request.getShippingState());
         order.setShippingPinCode(request.getShippingPinCode().trim());
 
-        // Process items: Either direct buy or from Cart
+        // Process items: Either direct buy or from Cart with Pessimistic Row Locking
         List<OrderItem> items = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         if (request.getDirectProductId() != null) {
-            Product product = productRepository.findById(request.getDirectProductId())
+            Product product = productRepository.findByIdForUpdate(request.getDirectProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product", "id", request.getDirectProductId()));
 
             int qty = request.getDirectQuantity() != null && request.getDirectQuantity() > 0 ? request.getDirectQuantity() : 1;
@@ -87,7 +87,7 @@ public class OrderService {
             }
 
             product.setStock(product.getStock() - qty);
-            product.setReservedStock(product.getReservedStock() + qty);
+            product.setSoldQuantity((product.getSoldQuantity() != null ? product.getSoldQuantity() : 0) + qty);
             productRepository.save(product);
 
             OrderItem orderItem = new OrderItem(order, product, qty, product.getDiscountedPrice(), request.getDirectVariant());
@@ -100,13 +100,15 @@ public class OrderService {
             }
 
             for (CartItem cartItem : cart.getItems()) {
-                Product product = cartItem.getProduct();
+                Product product = productRepository.findByIdForUpdate(cartItem.getProduct().getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Product", "id", cartItem.getProduct().getId()));
+
                 if (product.getAvailableStock() < cartItem.getQuantity()) {
                     throw new BadRequestException("Product " + product.getTitle() + " has only " + product.getAvailableStock() + " in stock");
                 }
 
                 product.setStock(product.getStock() - cartItem.getQuantity());
-                product.setReservedStock(product.getReservedStock() + cartItem.getQuantity());
+                product.setSoldQuantity((product.getSoldQuantity() != null ? product.getSoldQuantity() : 0) + cartItem.getQuantity());
                 productRepository.save(product);
 
                 OrderItem orderItem = new OrderItem(order, product, cartItem.getQuantity(), cartItem.getUnitPrice(), cartItem.getSelectedVariant());
@@ -170,18 +172,21 @@ public class OrderService {
         return mapToDto(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<OrderDto> getUserOrders(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public OrderDto getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
         return mapToDto(order);
     }
 
+    @Transactional(readOnly = true)
     public OrderDto getOrderById(Long orderId, User user) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
@@ -195,6 +200,7 @@ public class OrderService {
         return mapToDto(order);
     }
 
+    @Transactional(readOnly = true)
     public List<OrderDto> getAllOrdersAdmin() {
         return orderRepository.findAll().stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
@@ -202,6 +208,7 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<OrderDto> getPartnerDeliveries(Long partnerId) {
         return orderRepository.findByDeliveryPartnerIdOrderByCreatedAtDesc(partnerId).stream()
                 .map(this::mapToPartnerDto)
@@ -223,11 +230,12 @@ public class OrderService {
             throw new BadRequestException("Delivered orders cannot be cancelled. Please request a return instead.");
         }
 
-        // Restock products
+        // Restock products with pessimistic lock
         for (OrderItem item : order.getItems()) {
-            Product p = item.getProduct();
+            Product p = productRepository.findByIdForUpdate(item.getProduct().getId())
+                    .orElse(item.getProduct());
             p.setStock(p.getStock() + item.getQuantity());
-            p.setReservedStock(Math.max(0, p.getReservedStock() - item.getQuantity()));
+            p.setSoldQuantity(Math.max(0, (p.getSoldQuantity() != null ? p.getSoldQuantity() : 0) - item.getQuantity()));
             productRepository.save(p);
         }
 
@@ -316,6 +324,18 @@ public class OrderService {
 
         if (partner.getStatus() != DeliveryPartnerStatus.ACTIVE) {
             throw new BadRequestException("Partner must be ACTIVE and approved");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.DELIVERED) {
+            throw new BadRequestException("Cannot assign or reassign a delivery partner to an order that is already DELIVERED.");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new BadRequestException("Cannot assign or reassign a delivery partner to a CANCELLED order.");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.RETURNED || order.getOrderStatus() == OrderStatus.REFUNDED) {
+            throw new BadRequestException("Cannot assign or reassign a delivery partner to a closed order (" + order.getOrderStatus() + ").");
         }
 
         if (order.getDeliveryPartner() != null && !order.getDeliveryPartner().getId().equals(partner.getId())) {
